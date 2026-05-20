@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import {
   ArrowUpRight,
+  Award,
   BriefcaseBusiness,
+  CalendarDays,
   Code2,
   Download,
   Mail,
@@ -17,6 +19,7 @@ const navItems = [
   { label: 'Home', href: '#home' },
   { label: 'Skills', href: '#skills' },
   { label: 'Sobre', href: '#about' },
+  { label: 'Jornada', href: '#journey' },
   { label: 'Projetos', href: '#projects' },
   { label: 'Contato', href: '#contact' },
 ];
@@ -27,6 +30,8 @@ export function PublicPortfolio() {
   const { profile, technologies, projects } = content;
   const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
   const publishedProjects = projects.filter((project) => project.isPublished);
+  const publishedExperiences = content.experiences.filter((experience) => experience.isPublished);
+  const publishedCertificates = content.certificates.filter((certificate) => certificate.isPublished);
   const stats = [
     { value: String(publishedProjects.length).padStart(2, '0'), label: 'projetos publicados' },
     { value: String(featuredTechnologies.length).padStart(2, '0'), label: 'tecnologias' },
@@ -34,9 +39,24 @@ export function PublicPortfolio() {
   ];
 
   const closeMenu = () => setIsMenuOpen(false);
+  const formatDate = (date: string | null) => {
+    if (!date) {
+      return 'Atual';
+    }
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(date));
+  };
 
   return (
     <div className="portfolio-page" aria-busy={isLoading}>
+      <a className="skip-link" href="#home">
+        Pular para conteúdo
+      </a>
+
       <header className="site-header">
         <a className="brand" href="#home" aria-label="Voltar para o início">
           <span>JoãoVG</span>
@@ -146,6 +166,49 @@ export function PublicPortfolio() {
                 <span>{stat.label}</span>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section id="journey" className="journey-section" aria-labelledby="journey-title">
+          <div className="section-heading">
+            <p className="eyebrow">Jornada</p>
+            <h2 id="journey-title">Experiências e formação em evolução constante</h2>
+          </div>
+
+          <div className="journey-grid">
+            <div className="timeline-list">
+              {publishedExperiences.map((experience) => (
+                <article className="timeline-item" key={experience.id}>
+                  <CalendarDays size={20} />
+                  <div>
+                    <span>
+                      {formatDate(experience.startDate)} - {formatDate(experience.endDate)}
+                    </span>
+                    <h3>{experience.role}</h3>
+                    <strong>{experience.company}</strong>
+                    <p>{experience.description}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="certificate-list">
+              {publishedCertificates.map((certificate) => (
+                <article className="certificate-item" key={certificate.id}>
+                  <Award size={22} />
+                  <div>
+                    <span>{certificate.issuer}</span>
+                    <h3>{certificate.title}</h3>
+                    {certificate.credentialUrl && (
+                      <a href={certificate.credentialUrl} target="_blank" rel="noreferrer">
+                        Ver credencial
+                        <ArrowUpRight size={16} />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 

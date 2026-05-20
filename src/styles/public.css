@@ -3,6 +3,23 @@
   overflow: hidden;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 60;
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: translateY(-160%);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.85rem;
+  color: #ffffff;
+  background: var(--red-core);
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .portfolio-page[aria-busy='true'] {
   cursor: progress;
 }
@@ -55,6 +72,12 @@
 .desktop-nav a:hover,
 .site-footer a:hover {
   color: var(--red-soft);
+}
+
+.portfolio-page a:focus-visible,
+.portfolio-page button:focus-visible {
+  outline: 3px solid rgba(255, 116, 102, 0.55);
+  outline-offset: 4px;
 }
 
 .admin-link {
@@ -220,6 +243,7 @@
 
 .skills-section,
 .about-section,
+.journey-section,
 .projects-section,
 .contact-section {
   padding: clamp(4.5rem, 8vw, 7rem) clamp(1rem, 5vw, 5rem);
@@ -310,6 +334,72 @@
 .stat-item span {
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+.journey-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.timeline-list,
+.certificate-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.timeline-item,
+.certificate-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.timeline-item svg,
+.certificate-item svg {
+  color: var(--red-soft);
+}
+
+.timeline-item span,
+.certificate-item span {
+  color: var(--red-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.timeline-item h3,
+.certificate-item h3 {
+  margin: 0.35rem 0 0.15rem;
+  font-size: 1.15rem;
+}
+
+.timeline-item strong {
+  display: block;
+  color: var(--white);
+  font-size: 0.95rem;
+}
+
+.timeline-item p {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.certificate-item a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .projects-grid {
@@ -449,5 +539,26 @@
 
   .contact-actions {
     flex-direction: column;
+  }
+
+  .journey-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .skills-track {
+    width: 100%;
+    flex-wrap: wrap;
+    animation: none;
   }
 }

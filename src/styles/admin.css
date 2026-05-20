@@ -55,6 +55,17 @@
   color: var(--muted);
 }
 
+.admin-page a:focus-visible,
+.admin-page button:focus-visible,
+.admin-shell a:focus-visible,
+.admin-shell button:focus-visible,
+.admin-shell input:focus-visible,
+.admin-shell textarea:focus-visible,
+.admin-shell select:focus-visible {
+  outline: 3px solid rgba(255, 116, 102, 0.55);
+  outline-offset: 4px;
+}
+
 .admin-eyebrow {
   margin: 0;
   color: var(--red-soft);
@@ -155,11 +166,16 @@
 }
 
 .admin-sidebar nav {
-  display: none;
+  min-width: 0;
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
 .admin-sidebar nav a {
   min-height: 42px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -480,6 +496,8 @@
   .admin-sidebar nav {
     display: grid;
     gap: 0.3rem;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .cms-record-row {

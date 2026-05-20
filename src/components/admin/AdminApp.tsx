@@ -49,6 +49,21 @@ export function AdminApp() {
     setIsSubmitting(false);
   }
 
+  if (isLoading && session) {
+    return (
+      <main className="admin-page">
+        <section className="admin-auth-panel">
+          <div className="admin-auth-copy">
+            <ShieldCheck size={34} />
+            <p className="admin-eyebrow">Validando sessão</p>
+            <h1>Conferindo permissões do CMS</h1>
+            <p>Estamos confirmando se o usuário atual tem acesso administrativo.</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   if (!isSupabaseConfigured) {
     return (
       <main className="admin-page">
