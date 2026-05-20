@@ -198,7 +198,8 @@
 }
 
 .admin-summary-grid,
-.admin-module-grid {
+.admin-module-grid,
+.cms-resource-stack {
   display: grid;
   gap: 1rem;
 }
@@ -255,6 +256,210 @@
   line-height: 1.65;
 }
 
+.cms-resource-stack {
+  margin-top: 1rem;
+}
+
+.cms-resource-section {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.35rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(18, 13, 13, 0.76);
+}
+
+.cms-resource-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cms-resource-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 6vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+
+.cms-resource-header p,
+.cms-empty-state,
+.cms-record-row p {
+  color: var(--muted);
+}
+
+.cms-resource-header button,
+.cms-form-actions button,
+.cms-record-actions button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 0.85rem;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 700;
+}
+
+.cms-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.9rem;
+}
+
+.cms-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cms-field.wide {
+  grid-column: 1 / -1;
+}
+
+.cms-field input,
+.cms-field textarea,
+.cms-field select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.85rem;
+  color: var(--white);
+  background: rgba(0, 0, 0, 0.22);
+  outline: none;
+}
+
+.cms-field textarea {
+  resize: vertical;
+}
+
+.cms-field input:focus,
+.cms-field textarea:focus,
+.cms-field select:focus {
+  border-color: var(--red-soft);
+  box-shadow: 0 0 0 3px rgba(242, 75, 61, 0.14);
+}
+
+.cms-checkbox {
+  width: 46px;
+  height: 42px;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.cms-checkbox input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.cms-checkbox svg {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.cms-checkbox:has(input:checked) {
+  border-color: var(--red-soft);
+  background: rgba(242, 75, 61, 0.18);
+}
+
+.cms-checkbox:has(input:checked) svg {
+  color: var(--red-soft);
+}
+
+.cms-form-actions,
+.cms-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.cms-form-actions {
+  grid-column: 1 / -1;
+}
+
+.cms-form-actions button[type='submit'] {
+  border: 0;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--red-deep), var(--red-bright));
+}
+
+.cms-form-actions button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.cms-secondary-button {
+  color: var(--muted);
+}
+
+.cms-message {
+  margin: 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(74, 222, 128, 0.28);
+  border-radius: var(--radius);
+  color: #dcfce7;
+  background: rgba(22, 101, 52, 0.16);
+}
+
+.cms-message.error {
+  border-color: rgba(255, 116, 102, 0.34);
+  color: #ffd1cc;
+  background: rgba(111, 7, 7, 0.28);
+}
+
+.cms-record-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.cms-empty-state {
+  margin: 0;
+  padding: 0.9rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+.cms-record-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.cms-record-row h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.cms-record-row p {
+  margin: 0.25rem 0 0;
+}
+
+.cms-record-actions button:last-child {
+  color: #ffd1cc;
+}
+
 @media (min-width: 920px) {
   .admin-shell {
     grid-template-columns: 260px minmax(0, 1fr);
@@ -276,5 +481,9 @@
     display: grid;
     gap: 0.3rem;
   }
-}
 
+  .cms-record-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}

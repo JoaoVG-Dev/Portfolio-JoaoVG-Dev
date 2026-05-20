@@ -9,33 +9,21 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { cmsResourceConfigs } from '../../config/cmsResources';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { usePortfolioContent } from '../../hooks/usePortfolioContent';
 import { isSupabaseConfigured } from '../../lib/supabase';
+import { CmsResourceManager } from './CmsResourceManager';
 import '../../styles/admin.css';
+import type { CmsResourceKey } from '../../types/cms';
 
-const cmsModules = [
-  {
-    label: 'Projetos',
-    description: 'Gerencie cases, links, imagens e publicação.',
-    icon: FolderKanban,
-  },
-  {
-    label: 'Tecnologias',
-    description: 'Organize stack, categorias e ordenação pública.',
-    icon: Sparkles,
-  },
-  {
-    label: 'Certificados',
-    description: 'Cadastre formações, emissores e credenciais.',
-    icon: FileBadge2,
-  },
-  {
-    label: 'Experiências',
-    description: 'Atualize jornada profissional e estudos.',
-    icon: BriefcaseBusiness,
-  },
-];
+const resourceIcons: Record<CmsResourceKey, LucideIcon> = {
+  projects: FolderKanban,
+  technologies: Sparkles,
+  certificates: FileBadge2,
+  experiences: BriefcaseBusiness,
+};
 
 export function AdminApp() {
   const { session, isAdmin, isLoading, authError, signIn, signOut } = useAuthSession();
@@ -155,13 +143,13 @@ export function AdminApp() {
           JoãoVG
         </a>
         <nav aria-label="Navegação do CMS">
-          {cmsModules.map((module) => {
-            const Icon = module.icon;
+          {cmsResourceConfigs.map((config) => {
+            const Icon = resourceIcons[config.key];
 
             return (
-              <a key={module.label} href={`#${module.label.toLowerCase()}`}>
+              <a key={config.key} href={`#${config.key}`}>
                 <Icon size={18} />
-                {module.label}
+                {config.title}
               </a>
             );
           })}
@@ -190,23 +178,12 @@ export function AdminApp() {
           ))}
         </section>
 
-        <section className="admin-module-grid">
-          {cmsModules.map((module) => {
-            const Icon = module.icon;
-
-            return (
-              <article className="admin-module-card" id={module.label.toLowerCase()} key={module.label}>
-                <Icon size={24} />
-                <div>
-                  <h2>{module.label}</h2>
-                  <p>{module.description}</p>
-                </div>
-              </article>
-            );
-          })}
-        </section>
+        <div className="cms-resource-stack">
+          {cmsResourceConfigs.map((config) => (
+            <CmsResourceManager config={config} key={config.key} />
+          ))}
+        </div>
       </main>
     </div>
   );
 }
-
