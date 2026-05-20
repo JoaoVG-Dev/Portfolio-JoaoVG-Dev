@@ -1,9 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap');
+
 :root {
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  color: #f7efef;
-  background: #080808;
+  --black: #080808;
+  --black-soft: #101010;
+  --black-card: #171313;
+  --red-deep: #6f0707;
+  --red-core: #ba2b24;
+  --red-bright: #f24b3d;
+  --red-soft: #ff7466;
+  --white: #fff7f4;
+  --muted: #b9aaa6;
+  --line: rgba(255, 116, 102, 0.18);
+  --radius: 8px;
+  --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+  --font-display: 'Bebas Neue', Impact, sans-serif;
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: var(--white);
+  background: var(--black);
+  font-family: var(--font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -22,7 +37,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #080808;
+  background:
+    radial-gradient(circle at top left, rgba(186, 43, 36, 0.25), transparent 34rem),
+    linear-gradient(135deg, #090707 0%, #120707 48%, #050505 100%);
 }
 
 button,
@@ -46,11 +63,7 @@ img {
   max-width: 100%;
 }
 
-.app-shell {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 2rem;
-  text-align: center;
+::selection {
+  color: #ffffff;
+  background: var(--red-core);
 }
-

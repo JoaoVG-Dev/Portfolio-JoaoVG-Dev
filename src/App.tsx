@@ -1,11 +1,5 @@
-function App() {
-  return (
-    <main className="app-shell">
-      <h1>João Vitor Guidoti</h1>
-      <p>Portfolio CMS em construção.</p>
-    </main>
-  );
+import { PublicPortfolio } from './components/PublicPortfolio';
+
+export default function App() {
+  return <PublicPortfolio />;
 }
-
-export default App;
-
