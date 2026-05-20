@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import {
   ArrowUpRight,
+  BriefcaseBusiness,
+  Code2,
   Download,
-  Github,
-  Linkedin,
   Mail,
   MapPin,
   Menu,
   Send,
   X,
 } from 'lucide-react';
+import { usePortfolioContent } from '../hooks/usePortfolioContent';
 import '../styles/public.css';
 
 const navItems = [
@@ -20,97 +21,22 @@ const navItems = [
   { label: 'Contato', href: '#contact' },
 ];
 
-const skills = [
-  {
-    name: 'HTML5',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg',
-  },
-  {
-    name: 'CSS3',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg',
-  },
-  {
-    name: 'JavaScript',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
-  },
-  {
-    name: 'TypeScript',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
-  },
-  {
-    name: 'React',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
-  },
-  {
-    name: 'PHP',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg',
-  },
-  {
-    name: 'Laravel',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg',
-  },
-  {
-    name: 'MySQL',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
-  },
-  {
-    name: 'Figma',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg',
-  },
-];
-
-const projects = [
-  {
-    title: 'KiTenis',
-    category: 'E-commerce',
-    image: '/assets/projects/E-commerce _ KiTenis.png',
-    href: 'https://github.com/DevJoao-G/KiTenis',
-  },
-  {
-    title: 'KiCorte',
-    category: 'SaaS para barbearias',
-    image: '/assets/projects/Saas _ KiCorte.png',
-    href: '#contact',
-  },
-  {
-    title: 'Loja Meteora',
-    category: 'Alura',
-    image: '/assets/projects/Loja Virtual _ Meteora.png',
-    href: 'https://devjoao-g.github.io/Alura-Meteora/',
-  },
-  {
-    title: 'Estante Virtual',
-    category: 'Alura',
-    image: '/assets/projects/Estante Virtual _ Alura.png',
-    href: 'https://devjoao-g.github.io/Alura-Metodos-DE-array/',
-  },
-  {
-    title: 'ToDo List',
-    category: 'Alura',
-    image: '/assets/projects/To-Do List _ Alura.png',
-    href: 'https://devjoao-g.github.io/Alura-ToDoList/',
-  },
-  {
-    title: 'Portfólio Pessoal',
-    category: 'Alura',
-    image: '/assets/projects/Portfolio _ Alura.png',
-    href: 'https://devjoao-g.github.io/Alura-HTML-CSS-Portfolio/',
-  },
-];
-
-const stats = [
-  { value: '21', label: 'anos' },
-  { value: 'Full stack', label: 'formação em andamento' },
-  { value: 'Remoto', label: 'disponibilidade' },
-];
-
 export function PublicPortfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { content, isLoading } = usePortfolioContent();
+  const { profile, technologies, projects } = content;
+  const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
+  const publishedProjects = projects.filter((project) => project.isPublished);
+  const stats = [
+    { value: String(publishedProjects.length).padStart(2, '0'), label: 'projetos publicados' },
+    { value: String(featuredTechnologies.length).padStart(2, '0'), label: 'tecnologias' },
+    { value: 'Remoto', label: 'disponibilidade' },
+  ];
 
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page" aria-busy={isLoading}>
       <header className="site-header">
         <a className="brand" href="#home" aria-label="Voltar para o início">
           <span>JoãoVG</span>
@@ -155,15 +81,9 @@ export function PublicPortfolio() {
       <main>
         <section id="home" className="hero-section" aria-labelledby="hero-title">
           <div className="hero-content">
-            <p className="eyebrow">Software engineer</p>
-            <h1 id="hero-title">
-              João Vitor Guidoti constrói produtos digitais limpos, rápidos e
-              funcionais.
-            </h1>
-            <p className="hero-copy">
-              Desenvolvimento front-end e full stack com React, PHP e Laravel,
-              conectando design, código e entrega com atenção real à experiência.
-            </p>
+            <p className="eyebrow">{profile.role}</p>
+            <h1 id="hero-title">{profile.headline}</h1>
+            <p className="hero-copy">{profile.summary}</p>
             <div className="hero-actions">
               <a className="button primary-button" href="#projects">
                 Ver projetos
@@ -171,7 +91,7 @@ export function PublicPortfolio() {
               </a>
               <a
                 className="button ghost-button"
-                href="/assets/cv/Joao_Vitor_Guidoti_CV.pdf"
+                href={profile.cvUrl}
                 download
               >
                 <Download size={18} />
@@ -179,23 +99,19 @@ export function PublicPortfolio() {
               </a>
             </div>
             <div className="social-row" aria-label="Redes sociais">
-              <a href="https://github.com/JoaoXG-Dev" target="_blank" rel="noreferrer">
-                <Github size={19} />
+              <a href={profile.githubUrl} target="_blank" rel="noreferrer">
+                <Code2 size={19} />
                 GitHub
               </a>
-              <a
-                href="https://www.linkedin.com/in/devjoaog"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Linkedin size={19} />
+              <a href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+                <BriefcaseBusiness size={19} />
                 LinkedIn
               </a>
             </div>
           </div>
 
           <div className="hero-media" aria-hidden="true">
-            <img src="/assets/images/DevJoaoG.png" alt="" />
+            <img src={profile.avatarUrl} alt="" />
           </div>
         </section>
 
@@ -205,9 +121,9 @@ export function PublicPortfolio() {
             <h2 id="skills-title">Tecnologias que uso para construir</h2>
           </div>
           <div className="skills-track">
-            {[...skills, ...skills].map((skill, index) => (
+            {[...featuredTechnologies, ...featuredTechnologies].map((skill, index) => (
               <div className="skill-pill" key={`${skill.name}-${index}`}>
-                <img src={skill.icon} alt="" width={24} height={24} />
+                <img src={skill.iconUrl} alt="" width={24} height={24} />
                 <span>{skill.name}</span>
               </div>
             ))}
@@ -218,16 +134,9 @@ export function PublicPortfolio() {
           <div className="about-copy">
             <p className="eyebrow">Sobre</p>
             <h2 id="about-title">Desenvolvedor focado em interfaces modernas e sistemas úteis.</h2>
-            <p>
-              Tenho formação em Análise e Desenvolvimento de Sistemas pela Estácio e
-              sigo aprofundando minha prática em desenvolvimento full stack. Gosto de
-              transformar ideias em produtos digitais com código claro, design sólido e
-              uma experiência que faça sentido para quem usa.
-            </p>
-            <p>
-              Trabalho com HTML, CSS, JavaScript, React, PHP e Laravel, criando desde
-              landing pages até aplicações com painel administrativo e integrações.
-            </p>
+            {profile.bio.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
           </div>
 
           <div className="stats-grid" aria-label="Resumo profissional">
@@ -247,19 +156,25 @@ export function PublicPortfolio() {
           </div>
 
           <div className="projects-grid">
-            {projects.map((project) => (
+            {publishedProjects.map((project) => {
+              const projectHref = project.liveUrl ?? project.repositoryUrl ?? '#contact';
+              const isExternal = projectHref.startsWith('http');
+
+              return (
               <article className="project-card" key={project.title}>
-                <img src={project.image} alt={`Preview do projeto ${project.title}`} />
+                <img src={project.imageUrl} alt={`Preview do projeto ${project.title}`} />
                 <div className="project-body">
                   <span>{project.category}</span>
                   <h3>{project.title}</h3>
-                  <a href={project.href} target={project.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+                  <p>{project.description}</p>
+                  <a href={projectHref} target={isExternal ? '_blank' : undefined} rel="noreferrer">
                     Ver projeto
                     <ArrowUpRight size={17} />
                   </a>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -275,13 +190,13 @@ export function PublicPortfolio() {
             </div>
 
             <div className="contact-actions">
-              <a className="contact-card" href="mailto:devjoaog@outlook.com">
+              <a className="contact-card" href={`mailto:${profile.email}`}>
                 <Mail size={20} />
-                <span>devjoaog@outlook.com</span>
+                <span>{profile.email}</span>
               </a>
               <a
                 className="contact-card"
-                href="https://wa.me/55219793824423"
+                href={profile.whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -290,7 +205,7 @@ export function PublicPortfolio() {
               </a>
               <div className="contact-card">
                 <MapPin size={20} />
-                <span>Brasil, remoto</span>
+                <span>{profile.location}</span>
               </div>
             </div>
           </div>
@@ -298,10 +213,9 @@ export function PublicPortfolio() {
       </main>
 
       <footer className="site-footer">
-        <span>© {new Date().getFullYear()} João Vitor Guidoti</span>
+        <span>© {new Date().getFullYear()} {profile.name}</span>
         <a href="#home">Voltar ao topo</a>
       </footer>
     </div>
   );
 }
-

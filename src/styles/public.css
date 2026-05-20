@@ -3,6 +3,10 @@
   overflow: hidden;
 }
 
+.portfolio-page[aria-busy='true'] {
+  cursor: progress;
+}
+
 .site-header {
   position: fixed;
   z-index: 30;
@@ -352,6 +356,14 @@
   font-size: 1.2rem;
 }
 
+.project-body p {
+  min-height: 4.5rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
 .project-body a {
   justify-self: start;
   color: var(--muted);
@@ -439,4 +451,3 @@
     flex-direction: column;
   }
 }
-
