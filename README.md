@@ -59,9 +59,18 @@ A migration cria:
 - `experiences`
 - função `is_admin()`
 - triggers de `updated_at`
+- trigger `handle_new_auth_user()` para criar profile automaticamente quando um usuário nasce em `auth.users`
 - RLS e policies sem escrita pública
 
 Visitantes leem apenas registros com `active = true`. Escrita é permitida apenas para usuários autenticados cujo profile tenha `role = 'admin'`.
+
+Para bancos que já foram criados antes do fluxo automático de permissões, aplique também a migration incremental:
+
+```sql
+-- supabase/migrations/20260521120000_improve_admin_role_provisioning.sql
+```
+
+Essa migration garante a coluna `role`, cria a trigger de novos usuários e mantém a regra segura: o primeiro usuário Auth vira `admin`; usuários criados depois começam como `viewer` e precisam de promoção manual.
 
 ## Seed Inicial
 
@@ -80,6 +89,69 @@ O registro de `profiles` depende de `auth.users`, porque `profiles.id` referenci
 3. O seed encontrará esse usuário e criará/atualizará o profile com `role = 'admin'`.
 
 Se o usuário Auth ainda não existir, o seed não quebra; apenas não insere o profile. Nesse caso, crie o usuário e rode o seed novamente.
+
+## Usuário Admin
+
+Para acesso ao painel, o usuário precisa existir em Supabase Auth e também ter uma linha em `public.profiles` com `role = 'admin'` e `active = true`.
+
+Fluxo recomendado para configuração inicial:
+
+1. Aplique `supabase/migrations/20260520170000_create_portfolio_cms.sql`.
+2. Aplique `supabase/migrations/20260521120000_improve_admin_role_provisioning.sql`.
+3. Crie o usuário `devjoaog@outlook.com` em Supabase Auth.
+4. Execute `supabase/promote-devjoaog-admin.sql` no SQL Editor do Supabase.
+5. Execute `supabase/seed.sql` para popular o conteúdo inicial, se ainda não tiver populado.
+
+O arquivo obrigatório para promover o usuário principal é:
+
+```sql
+-- supabase/promote-devjoaog-admin.sql
+```
+
+Ele executa:
+
+```sql
+insert into public.profiles (
+  id,
+  name,
+  title,
+  bio,
+  email,
+  role,
+  active,
+  created_at,
+  updated_at
+)
+select
+  id,
+  'João Vitor Guidoti',
+  'Desenvolvedor Full Stack',
+  'Portfólio pessoal DevJoão.',
+  email,
+  'admin',
+  true,
+  now(),
+  now()
+from auth.users
+where email = 'devjoaog@outlook.com'
+on conflict (id) do update
+set
+  name = excluded.name,
+  title = excluded.title,
+  bio = excluded.bio,
+  email = excluded.email,
+  role = 'admin',
+  active = true,
+  updated_at = now();
+```
+
+Se o painel mostrar `Seu usuário ainda não possui permissão de administrador.`, confirme no Supabase:
+
+- o usuário `devjoaog@outlook.com` existe em Auth;
+- a tabela `public.profiles` possui a coluna `role`;
+- existe uma linha em `public.profiles` para esse usuário com `role = 'admin'`;
+- se a coluna `active` existir, ela está como `true`;
+- as policies de escrita continuam usando `public.is_admin()` e não há policy de escrita pública.
 
 ## CMS
 

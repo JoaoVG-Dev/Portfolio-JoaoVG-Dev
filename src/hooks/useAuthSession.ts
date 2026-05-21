@@ -51,8 +51,12 @@ export function useAuthSession(): AuthSessionState {
         return;
       }
 
-      setIsAdmin(Boolean(data) && !error);
-      setAuthError(error ? 'Usuário autenticado, mas sem permissão administrativa.' : null);
+      const hasAdminRole = Boolean(data) && !error;
+
+      setIsAdmin(hasAdminRole);
+      setAuthError(
+        hasAdminRole ? null : 'Seu usuário ainda não possui permissão de administrador.',
+      );
       setIsLoading(false);
     }
 

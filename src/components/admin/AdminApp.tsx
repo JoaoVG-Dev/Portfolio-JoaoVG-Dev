@@ -132,10 +132,8 @@ export function AdminApp() {
           <div className="admin-auth-copy">
             <ShieldCheck size={34} />
             <h1>Acesso administrativo não liberado</h1>
-            <p>
-              Este usuário existe no Auth, mas precisa estar cadastrado em `public.profiles`
-              com `role = 'admin'`.
-            </p>
+            <p>Seu usuário ainda não possui permissão de administrador.</p>
+            <p>Promova o usuário em `public.profiles` com `role = 'admin'` para liberar o painel.</p>
           </div>
           {authError && <p className="admin-form-error">{authError}</p>}
           <button className="admin-danger-button" type="button" onClick={signOut}>
