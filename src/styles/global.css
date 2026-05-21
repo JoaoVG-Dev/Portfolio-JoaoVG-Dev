@@ -2,16 +2,23 @@
 
 :root {
   --black: #080808;
+  --black-mid: #111111;
   --black-soft: #101010;
-  --black-card: #171313;
-  --red-deep: #6f0707;
-  --red-core: #ba2b24;
-  --red-bright: #f24b3d;
-  --red-soft: #ff7466;
-  --white: #fff7f4;
-  --muted: #b9aaa6;
-  --line: rgba(255, 116, 102, 0.18);
-  --radius: 8px;
+  --black-card: #161616;
+  --red-deep: #8b0000;
+  --red-core: #c0392b;
+  --red-bright: #e74c3c;
+  --red-glow: #ff4d3d;
+  --red-light: #ff6b5b;
+  --red-soft: var(--red-light);
+  --white: #f5f0ef;
+  --muted: #9e8e8e;
+  --border: rgba(200, 50, 30, 0.18);
+  --line: var(--border);
+  --grad-fire: linear-gradient(135deg, #8b0000 0%, #c0392b 45%, #e74c3c 100%);
+  --grad-dark: linear-gradient(160deg, #1a0505 0%, #0d0000 60%, #080808 100%);
+  --grad-text: linear-gradient(90deg, #ff6b5b, #e74c3c, #8b0000);
+  --radius: 4px;
   --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
   --font-display: 'Bebas Neue', Impact, sans-serif;
   --font-body: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -37,9 +44,25 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(186, 43, 36, 0.25), transparent 34rem),
-    linear-gradient(135deg, #090707 0%, #120707 48%, #050505 100%);
+  overflow-x: hidden;
+  color: var(--white);
+  background-color: var(--black);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 0, 0, 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(100, 0, 0, 0.2) 0%, transparent 55%);
+  font-family: var(--font-body);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 }
 
 button,

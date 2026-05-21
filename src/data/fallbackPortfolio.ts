@@ -5,17 +5,16 @@ export const fallbackPortfolio: PortfolioContent = {
     id: 'joao-vitor-guidoti',
     name: 'João Vitor Guidoti',
     role: 'Software engineer',
-    headline: 'João Vitor Guidoti constrói produtos digitais limpos, rápidos e funcionais.',
+    headline: "Hi, it's João. I'm a Software engineer",
     summary:
-      'Desenvolvimento front-end e full stack com React, PHP e Laravel, conectando design, código e entrega com atenção real à experiência.',
+      'Turning ideas into digital products — from design to code, from concept to delivery.',
     bio: [
-      'Tenho formação em Análise e Desenvolvimento de Sistemas pela Estácio e sigo aprofundando minha prática em desenvolvimento full stack. Gosto de transformar ideias em produtos digitais com código claro, design sólido e uma experiência que faça sentido para quem usa.',
-      'Trabalho com HTML, CSS, JavaScript, React, PHP e Laravel, criando desde landing pages até aplicações com painel administrativo e integrações.',
+      "I'm a 21-year-old software developer passionate about building modern, functional web experiences. I hold a degree in Systems Analysis and Development from Estácio and I'm currently pursuing a Post-Graduate degree in Full Stack Development — always pushing forward and deepening my knowledge of the technologies shaping the digital future. I work with HTML, CSS, JavaScript, React, PHP, and Laravel, building projects from scratch with a focus on clean code, solid design, and great user experience. I'm open to remote opportunities and ready to collaborate on challenging projects that make a real impact.",
     ],
     email: 'devjoaog@outlook.com',
     location: 'Brasil, remoto',
     whatsappUrl: 'https://wa.me/55219793824423',
-    githubUrl: 'https://github.com/JoaoXG-Dev',
+    githubUrl: 'https://github.com/DevJoao-G',
     linkedinUrl: 'https://www.linkedin.com/in/devjoaog',
     instagramUrl: 'https://instagram.com/joao.dev__',
     cvUrl: '/assets/cv/Joao_Vitor_Guidoti_CV.pdf',
@@ -48,9 +47,9 @@ export const fallbackPortfolio: PortfolioContent = {
       isFeatured: true,
     },
     {
-      id: 'typescript',
-      name: 'TypeScript',
-      iconUrl: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+      id: 'bootstrap',
+      name: 'Bootstrap',
+      iconUrl: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg',
       category: 'front-end',
       sortOrder: 40,
       isFeatured: true,
@@ -138,7 +137,7 @@ export const fallbackPortfolio: PortfolioContent = {
     },
     {
       id: 'estante-virtual',
-      title: 'Estante Virtual',
+      title: 'Estante virtual de Livros',
       slug: 'estante-virtual',
       category: 'Alura',
       description: 'Estante de livros usando métodos de array em JavaScript.',
@@ -151,7 +150,7 @@ export const fallbackPortfolio: PortfolioContent = {
     },
     {
       id: 'todo-list',
-      title: 'ToDo List',
+      title: 'ToDo-List',
       slug: 'todo-list',
       category: 'Alura',
       description: 'Lista de tarefas com interações essenciais de produtividade.',
@@ -204,4 +203,3 @@ export const fallbackPortfolio: PortfolioContent = {
     },
   ],
 };
-

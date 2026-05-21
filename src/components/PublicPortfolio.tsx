@@ -1,27 +1,13 @@
-import { useState } from 'react';
-import {
-  ArrowUpRight,
-  Award,
-  BriefcaseBusiness,
-  CalendarDays,
-  Code2,
-  Download,
-  Mail,
-  MapPin,
-  Menu,
-  Send,
-  X,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { usePortfolioContent } from '../hooks/usePortfolioContent';
 import '../styles/public.css';
 
 const navItems = [
   { label: 'Home', href: '#home' },
   { label: 'Skills', href: '#skills' },
-  { label: 'Sobre', href: '#about' },
-  { label: 'Jornada', href: '#journey' },
-  { label: 'Projetos', href: '#projects' },
-  { label: 'Contato', href: '#contact' },
+  { label: 'About me', href: '#about' },
+  { label: 'Projects', href: '#projects' },
+  { label: 'Contact', href: '#contact' },
 ];
 
 export function PublicPortfolio() {
@@ -30,26 +16,24 @@ export function PublicPortfolio() {
   const { profile, technologies, projects } = content;
   const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
   const publishedProjects = projects.filter((project) => project.isPublished);
-  const publishedExperiences = content.experiences.filter((experience) => experience.isPublished);
-  const publishedCertificates = content.certificates.filter((certificate) => certificate.isPublished);
-  const stats = [
-    { value: String(publishedProjects.length).padStart(2, '0'), label: 'projetos publicados' },
-    { value: String(featuredTechnologies.length).padStart(2, '0'), label: 'tecnologias' },
-    { value: 'Remoto', label: 'disponibilidade' },
-  ];
 
   const closeMenu = () => setIsMenuOpen(false);
-  const formatDate = (date: string | null) => {
-    if (!date) {
-      return 'Atual';
-    }
 
-    return new Intl.DateTimeFormat('pt-BR', {
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'UTC',
-    }).format(new Date(date));
-  };
+  useEffect(() => {
+    const projectCards = document.querySelectorAll('.card-project');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle('show', entry.isIntersecting);
+        });
+      },
+      { threshold: 0.35 },
+    );
+
+    projectCards.forEach((card) => observer.observe(card));
+
+    return () => observer.disconnect();
+  }, [publishedProjects.length]);
 
   return (
     <div className="portfolio-page" aria-busy={isLoading}>
@@ -58,226 +42,252 @@ export function PublicPortfolio() {
       </a>
 
       <header className="site-header">
-        <a className="brand" href="#home" aria-label="Voltar para o início">
-          <span>JoãoVG</span>
-        </a>
+        <nav className="site-nav" aria-label="Navegação principal">
+          <div className="nav-links">
+            {navItems.map((item) => (
+              <a className="nav-link" key={item.href} href={item.href}>
+                {item.label}
+              </a>
+            ))}
+          </div>
 
-        <nav className="desktop-nav" aria-label="Navegação principal">
-          {navItems.map((item) => (
-            <a key={item.href} href={item.href}>
-              {item.label}
-            </a>
-          ))}
+          <button
+            className={`hamburger${isMenuOpen ? ' is-open' : ''}`}
+            type="button"
+            aria-label="Abrir menu"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobileMenu"
+            onClick={() => setIsMenuOpen((current) => !current)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </nav>
-
-        <a className="admin-link" href="/admin">
-          CMS
-        </a>
-
-        <button
-          className="icon-button mobile-menu-button"
-          type="button"
-          aria-label="Abrir menu"
-          aria-expanded={isMenuOpen}
-          onClick={() => setIsMenuOpen((current) => !current)}
-        >
-          {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
       </header>
 
-      {isMenuOpen && (
-        <nav className="mobile-nav" aria-label="Menu mobile">
+      <nav
+        className={`mobile-menu${isMenuOpen ? ' is-open' : ''}`}
+        id="mobileMenu"
+        aria-label="Menu de navegação mobile"
+      >
+        <button className="mobile-menu-close" type="button" aria-label="Fechar menu" onClick={closeMenu}>
+          ×
+        </button>
+        <div className="mobile-menu-links">
           {navItems.map((item) => (
             <a key={item.href} href={item.href} onClick={closeMenu}>
               {item.label}
             </a>
           ))}
-          <a href="/admin" onClick={closeMenu}>
-            CMS
-          </a>
-        </nav>
-      )}
+        </div>
+      </nav>
 
       <main>
-        <section id="home" className="hero-section" aria-labelledby="hero-title">
-          <div className="hero-content">
-            <p className="eyebrow">{profile.role}</p>
-            <h1 id="hero-title">{profile.headline}</h1>
-            <p className="hero-copy">{profile.summary}</p>
-            <div className="hero-actions">
-              <a className="button primary-button" href="#projects">
-                Ver projetos
-                <ArrowUpRight size={18} />
-              </a>
-              <a
-                className="button ghost-button"
-                href={profile.cvUrl}
-                download
-              >
-                <Download size={18} />
-                Baixar CV
-              </a>
-            </div>
-            <div className="social-row" aria-label="Redes sociais">
-              <a href={profile.githubUrl} target="_blank" rel="noreferrer">
-                <Code2 size={19} />
-                GitHub
-              </a>
-              <a href={profile.linkedinUrl} target="_blank" rel="noreferrer">
-                <BriefcaseBusiness size={19} />
-                LinkedIn
-              </a>
-            </div>
-          </div>
-
-          <div className="hero-media" aria-hidden="true">
-            <img src={profile.avatarUrl} alt="" />
+        <section id="home" className="Home">
+          <div>
+            <h1>
+              Hi, it's<strong> João</strong>
+              <br />
+              I'm a <strong>Software engineer </strong>
+            </h1>
+            <p>{profile.summary}</p>
+            <a className="home-button home-button-primary" href={profile.cvUrl} download>
+              Baixar CV
+            </a>
+            <a className="home-button home-button-secondary" href={profile.githubUrl} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+            <a className="home-button home-button-secondary" href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+              LinkedIn
+            </a>
           </div>
         </section>
 
-        <section id="skills" className="skills-section" aria-labelledby="skills-title">
-          <div className="section-heading">
-            <p className="eyebrow">Stack</p>
-            <h2 id="skills-title">Tecnologias que uso para construir</h2>
-          </div>
-          <div className="skills-track">
-            {[...featuredTechnologies, ...featuredTechnologies].map((skill, index) => (
-              <div className="skill-pill" key={`${skill.name}-${index}`}>
-                <img src={skill.iconUrl} alt="" width={24} height={24} />
-                <span>{skill.name}</span>
+        <section id="skills" className="skills-section">
+          <div className="carousel">
+            {featuredTechnologies.slice(0, 9).map((skill) => (
+              <div className="carousel-card" key={skill.id}>
+                <p className="carousel-card-image">
+                  <img src={skill.iconUrl} alt={skill.name} width={24} height={24} />
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        <section id="about" className="about-section" aria-labelledby="about-title">
-          <div className="about-copy">
-            <p className="eyebrow">Sobre</p>
-            <h2 id="about-title">Desenvolvedor focado em interfaces modernas e sistemas úteis.</h2>
+        <section id="about" className="about-me">
+          <div className="img">
+            <img src={profile.avatarUrl} alt="DevJoaoG Animado" />
+          </div>
+          <div>
+            <h1>About me</h1>
             {profile.bio.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
-
-          <div className="stats-grid" aria-label="Resumo profissional">
-            {stats.map((stat) => (
-              <div className="stat-item" key={stat.label}>
-                <strong>{stat.value}</strong>
-                <span>{stat.label}</span>
-              </div>
-            ))}
-          </div>
         </section>
 
-        <section id="journey" className="journey-section" aria-labelledby="journey-title">
-          <div className="section-heading">
-            <p className="eyebrow">Jornada</p>
-            <h2 id="journey-title">Experiências e formação em evolução constante</h2>
-          </div>
-
-          <div className="journey-grid">
-            <div className="timeline-list">
-              {publishedExperiences.map((experience) => (
-                <article className="timeline-item" key={experience.id}>
-                  <CalendarDays size={20} />
-                  <div>
-                    <span>
-                      {formatDate(experience.startDate)} - {formatDate(experience.endDate)}
-                    </span>
-                    <h3>{experience.role}</h3>
-                    <strong>{experience.company}</strong>
-                    <p>{experience.description}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <div className="certificate-list">
-              {publishedCertificates.map((certificate) => (
-                <article className="certificate-item" key={certificate.id}>
-                  <Award size={22} />
-                  <div>
-                    <span>{certificate.issuer}</span>
-                    <h3>{certificate.title}</h3>
-                    {certificate.credentialUrl && (
-                      <a href={certificate.credentialUrl} target="_blank" rel="noreferrer">
-                        Ver credencial
-                        <ArrowUpRight size={16} />
-                      </a>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="projects" className="projects-section" aria-labelledby="projects-title">
-          <div className="section-heading centered">
-            <p className="eyebrow">Projetos</p>
-            <h2 id="projects-title">Trabalhos selecionados</h2>
-          </div>
-
-          <div className="projects-grid">
+        <section id="projects" className="projects">
+          <h1>My Projects</h1>
+          <div className="list-card-project">
             {publishedProjects.map((project) => {
               const projectHref = project.liveUrl ?? project.repositoryUrl ?? '#contact';
               const isExternal = projectHref.startsWith('http');
 
               return (
-              <article className="project-card" key={project.title}>
-                <img src={project.imageUrl} alt={`Preview do projeto ${project.title}`} />
-                <div className="project-body">
-                  <span>{project.category}</span>
-                  <h3>{project.title}</h3>
-                  <p>{project.description}</p>
-                  <a href={projectHref} target={isExternal ? '_blank' : undefined} rel="noreferrer">
-                    Ver projeto
-                    <ArrowUpRight size={17} />
-                  </a>
+                <div className="card-project" key={project.id}>
+                  <div className="project">
+                    <img src={project.imageUrl} alt={project.title} />
+                    <p>
+                      {project.title} | {project.category}
+                    </p>
+                    <a
+                      className="project-button"
+                      href={projectHref}
+                      target={isExternal ? '_blank' : undefined}
+                      rel={isExternal ? 'noreferrer' : undefined}
+                    >
+                      View project
+                    </a>
+                  </div>
                 </div>
-              </article>
               );
             })}
           </div>
         </section>
 
         <section id="contact" className="contact-section" aria-labelledby="contact-title">
-          <div className="contact-panel">
-            <div>
-              <p className="eyebrow">Contato</p>
-              <h2 id="contact-title">Vamos construir algo com presença e propósito.</h2>
+          <div className="contact-container">
+            <header className="contact-header">
+              <h2 id="contact-title">Let's work together</h2>
               <p>
-                Aberto a oportunidades remotas, projetos freelance e colaborações em
-                produtos digitais.
+                Have a project in mind, a role to fill, or just want to say hi? Send me a message
+                and I'll get back to you as soon as possible.
               </p>
-            </div>
+            </header>
 
-            <div className="contact-actions">
-              <a className="contact-card" href={`mailto:${profile.email}`}>
-                <Mail size={20} />
-                <span>{profile.email}</span>
-              </a>
-              <a
-                className="contact-card"
-                href={profile.whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Send size={20} />
-                <span>WhatsApp</span>
-              </a>
-              <div className="contact-card">
-                <MapPin size={20} />
-                <span>{profile.location}</span>
-              </div>
+            <div className="contact-content">
+              <form className="contact-form" action="#" method="post" autoComplete="on">
+                <div className="field">
+                  <label htmlFor="name">Name</label>
+                  <input id="name" name="name" type="text" placeholder="Your name" required />
+                </div>
+                <div className="field">
+                  <label htmlFor="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="you@example.com" required />
+                </div>
+                <div className="field">
+                  <label htmlFor="subject">Subject</label>
+                  <input id="subject" name="subject" type="text" placeholder="What is this about?" />
+                </div>
+                <div className="field">
+                  <label htmlFor="message">Message</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={6}
+                    placeholder="Tell me about your project..."
+                    required
+                  />
+                </div>
+                <button type="submit" className="contact-submit">
+                  Send message
+                </button>
+              </form>
+
+              <aside className="contact-aside" aria-label="Contact details">
+                <div className="contact-card">
+                  <h3>Contact</h3>
+                  <p>
+                    Prefer email? Reach me at <a href={`mailto:${profile.email}`}>{profile.email}</a>.
+                  </p>
+                  <p>
+                    Based in <span>Brazil</span> — open to remote opportunities.
+                  </p>
+                </div>
+                <div className="contact-card">
+                  <h3>Social</h3>
+                  <ul className="contact-links">
+                    <li>
+                      <a href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+                        LinkedIn
+                      </a>
+                    </li>
+                    <li>
+                      <a href={profile.githubUrl} target="_blank" rel="noreferrer">
+                        GitHub
+                      </a>
+                    </li>
+                    <li>
+                      <a href={profile.instagramUrl} target="_blank" rel="noreferrer">
+                        Instagram
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </aside>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="site-footer">
-        <span>© {new Date().getFullYear()} {profile.name}</span>
-        <a href="#home">Voltar ao topo</a>
+      <footer className="site-footer" role="contentinfo">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <a href="#home" className="footer-logo" aria-label="Back to top">
+              <span className="footer-name">{profile.name}</span>
+            </a>
+            <p className="footer-tagline">
+              Front-end Developer • Building clean, fast, accessible web experiences.
+            </p>
+          </div>
+
+          <nav className="footer-nav" aria-label="Footer">
+            {navItems.map((item) => (
+              <a key={item.href} href={item.href}>
+                {item.label.replace('About me', 'About')}
+              </a>
+            ))}
+          </nav>
+
+          <div className="footer-contact">
+            <h2 className="footer-title">Let's talk</h2>
+            <ul className="footer-links">
+              <li>
+                <a href={`mailto:${profile.email}`} rel="noopener">
+                  {profile.email}
+                </a>
+              </li>
+              <li>
+                <a href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+                  LinkedIn
+                </a>
+              </li>
+              <li>
+                <a href={profile.githubUrl} target="_blank" rel="noreferrer">
+                  GitHub
+                </a>
+              </li>
+              <li>
+                <a href={profile.whatsappUrl} target="_blank" rel="noreferrer">
+                  WhatsApp
+                </a>
+              </li>
+            </ul>
+            <div className="footer-cta">
+              <a className="footer-btn" href={`mailto:${profile.email}?subject=Let's%20work%20together`}>
+                Hire me
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <small>
+            © {new Date().getFullYear()} {profile.name}. All rights reserved.
+          </small>
+        </div>
       </footer>
     </div>
   );
