@@ -71,7 +71,9 @@ export function useAuthSession(): AuthSessionState {
 
   async function signIn({ email, password }: LoginCredentials) {
     if (!isSupabaseConfigured || !supabase) {
-      setAuthError('Configure as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+      setAuthError(
+        'Configure as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.',
+      );
       return;
     }
 

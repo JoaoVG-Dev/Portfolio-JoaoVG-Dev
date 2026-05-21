@@ -72,8 +72,8 @@ export function AdminApp() {
             <KeyRound size={32} />
             <h1>Configuração do Supabase pendente</h1>
             <p>
-              Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` em um `.env`
-              local para ativar autenticação e CMS.
+              Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` em um
+              `.env` local para ativar autenticação e CMS.
             </p>
           </div>
           <a className="admin-secondary-link" href="/">
