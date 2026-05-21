@@ -11,134 +11,146 @@ import type {
 
 type ProfileRow = {
   id: string;
-  name: string;
-  role: string;
-  headline: string;
-  summary: string;
-  bio: string[];
-  email: string;
-  location: string;
-  whatsapp_url: string;
-  github_url: string;
-  linkedin_url: string;
-  instagram_url: string;
-  cv_url: string;
-  avatar_url: string;
-  is_published: boolean;
-  updated_at: string;
+  name: string | null;
+  title: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  github_url: string | null;
+  linkedin_url: string | null;
+  whatsapp_url: string | null;
+  email: string | null;
+  role: string | null;
+  active: boolean | null;
+  updated_at: string | null;
 };
 
 type TechnologyRow = {
   id: string;
   name: string;
-  icon_url: string;
-  category: string;
-  sort_order: number;
-  is_featured: boolean;
+  category: string | null;
+  level: string | null;
+  icon_url: string | null;
+  active: boolean | null;
+  display_order: number | null;
 };
 
 type ProjectRow = {
   id: string;
   title: string;
-  slug: string;
-  category: string;
-  description: string;
-  image_url: string;
-  live_url: string | null;
-  repository_url: string | null;
-  sort_order: number;
-  is_featured: boolean;
-  is_published: boolean;
+  slug: string | null;
+  short_description: string | null;
+  description: string | null;
+  cover_url: string | null;
+  github_url: string | null;
+  deploy_url: string | null;
+  status: string | null;
+  featured: boolean | null;
+  active: boolean | null;
+  display_order: number | null;
+  started_at: string | null;
+  completed_at: string | null;
 };
 
 type CertificateRow = {
   id: string;
   title: string;
-  issuer: string;
-  issued_at: string | null;
-  credential_url: string | null;
+  institution: string | null;
+  category: string | null;
+  certificate_url: string | null;
   image_url: string | null;
-  sort_order: number;
-  is_published: boolean;
+  workload: string | null;
+  completed_at: string | null;
+  active: boolean | null;
+  display_order: number | null;
 };
 
 type ExperienceRow = {
   id: string;
-  company: string;
   role: string;
-  location: string;
-  start_date: string;
+  company: string | null;
+  start_date: string | null;
   end_date: string | null;
-  description: string;
-  type: Experience['type'];
-  sort_order: number;
-  is_published: boolean;
+  current: boolean | null;
+  description: string | null;
+  active: boolean | null;
+  display_order: number | null;
+};
+
+const splitBio = (bio: string | null) => {
+  if (!bio) {
+    return fallbackPortfolio.profile.bio;
+  }
+
+  return bio
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 };
 
 const mapProfile = (row: ProfileRow): Profile => ({
   id: row.id,
-  name: row.name,
-  role: row.role,
-  headline: row.headline,
-  summary: row.summary,
-  bio: row.bio,
-  email: row.email,
-  location: row.location,
-  whatsappUrl: row.whatsapp_url,
-  githubUrl: row.github_url,
-  linkedinUrl: row.linkedin_url,
-  instagramUrl: row.instagram_url,
-  cvUrl: row.cv_url,
-  avatarUrl: row.avatar_url,
-  isPublished: row.is_published,
-  updatedAt: row.updated_at,
+  name: row.name ?? fallbackPortfolio.profile.name,
+  role: row.title ?? fallbackPortfolio.profile.role,
+  headline: fallbackPortfolio.profile.headline,
+  summary: fallbackPortfolio.profile.summary,
+  bio: splitBio(row.bio),
+  email: row.email ?? fallbackPortfolio.profile.email,
+  location: fallbackPortfolio.profile.location,
+  whatsappUrl: row.whatsapp_url ?? fallbackPortfolio.profile.whatsappUrl,
+  githubUrl: row.github_url ?? fallbackPortfolio.profile.githubUrl,
+  linkedinUrl: row.linkedin_url ?? fallbackPortfolio.profile.linkedinUrl,
+  instagramUrl: fallbackPortfolio.profile.instagramUrl,
+  cvUrl: fallbackPortfolio.profile.cvUrl,
+  avatarUrl: row.avatar_url ?? fallbackPortfolio.profile.avatarUrl,
+  isPublished: row.active ?? true,
+  updatedAt: row.updated_at ?? undefined,
 });
 
 const mapTechnology = (row: TechnologyRow): Technology => ({
   id: row.id,
   name: row.name,
-  iconUrl: row.icon_url,
-  category: row.category,
-  sortOrder: row.sort_order,
-  isFeatured: row.is_featured,
+  iconUrl: row.icon_url ?? '',
+  category: row.category ?? '',
+  sortOrder: row.display_order ?? 0,
+  isFeatured: row.active ?? true,
 });
 
 const mapProject = (row: ProjectRow): Project => ({
   id: row.id,
   title: row.title,
-  slug: row.slug,
-  category: row.category,
-  description: row.description,
-  imageUrl: row.image_url,
-  liveUrl: row.live_url,
-  repositoryUrl: row.repository_url,
-  sortOrder: row.sort_order,
-  isFeatured: row.is_featured,
-  isPublished: row.is_published,
+  slug: row.slug ?? row.id,
+  category: row.short_description ?? row.status ?? 'Projeto',
+  description: row.description ?? row.short_description ?? '',
+  imageUrl: row.cover_url ?? '',
+  liveUrl: row.deploy_url,
+  repositoryUrl: row.github_url,
+  sortOrder: row.display_order ?? 0,
+  isFeatured: row.featured ?? false,
+  isPublished: row.active ?? true,
 });
 
 const mapCertificate = (row: CertificateRow): Certificate => ({
   id: row.id,
   title: row.title,
-  issuer: row.issuer,
-  issuedAt: row.issued_at,
-  credentialUrl: row.credential_url,
+  issuer: row.institution ?? row.category ?? '',
+  issuedAt: row.completed_at,
+  credentialUrl: row.certificate_url,
   imageUrl: row.image_url,
-  sortOrder: row.sort_order,
-  isPublished: row.is_published,
+  sortOrder: row.display_order ?? 0,
+  isPublished: row.active ?? true,
 });
 
 const mapExperience = (row: ExperienceRow): Experience => ({
   id: row.id,
-  company: row.company,
+  company: row.company ?? '',
   role: row.role,
-  location: row.location,
-  startDate: row.start_date,
-  endDate: row.end_date,
-  description: row.description,
-  type: row.type,
-  sortOrder: row.sort_order,
-  isPublished: row.is_published,
+  location: fallbackPortfolio.profile.location,
+  startDate: row.start_date ?? '',
+  endDate: row.current ? null : row.end_date,
+  description: row.description ?? '',
+  type: row.current ? 'personal' : 'full-time',
+  sortOrder: row.display_order ?? 0,
+  isPublished: row.active ?? true,
 });
 
 export async function fetchPortfolioContent(): Promise<PortfolioContent> {
@@ -148,11 +160,11 @@ export async function fetchPortfolioContent(): Promise<PortfolioContent> {
 
   try {
     const [profile, technologies, projects, certificates, experiences] = await Promise.all([
-      supabase.from('profiles').select('*').eq('is_published', true).limit(1).maybeSingle(),
-      supabase.from('technologies').select('*').eq('is_featured', true).order('sort_order'),
-      supabase.from('projects').select('*').eq('is_published', true).order('sort_order'),
-      supabase.from('certificates').select('*').eq('is_published', true).order('sort_order'),
-      supabase.from('experiences').select('*').eq('is_published', true).order('sort_order'),
+      supabase.from('profiles').select('*').eq('active', true).limit(1).maybeSingle(),
+      supabase.from('technologies').select('*').eq('active', true).order('display_order'),
+      supabase.from('projects').select('*').eq('active', true).order('display_order'),
+      supabase.from('certificates').select('*').eq('active', true).order('display_order'),
+      supabase.from('experiences').select('*').eq('active', true).order('display_order'),
     ]);
 
     const error =
@@ -190,4 +202,3 @@ export async function fetchPortfolioContent(): Promise<PortfolioContent> {
     return fallbackPortfolio;
   }
 }
-

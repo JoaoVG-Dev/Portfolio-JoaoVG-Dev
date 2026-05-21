@@ -14,7 +14,7 @@ export async function fetchCmsRecords(config: CmsResourceConfig): Promise<CmsRec
   const { data, error } = await client
     .from(config.table)
     .select('*')
-    .order('sort_order', { ascending: true });
+    .order('display_order', { ascending: true });
 
   if (error) {
     throw error;
@@ -49,4 +49,3 @@ export async function deleteCmsRecord(config: CmsResourceConfig, id: string) {
     throw error;
   }
 }
-
