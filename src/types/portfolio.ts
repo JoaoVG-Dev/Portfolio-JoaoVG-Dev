@@ -35,6 +35,7 @@ export type Project = {
   imageUrl: string;
   liveUrl: string | null;
   repositoryUrl: string | null;
+  technologies: Technology[];
   sortOrder: number;
   isFeatured: boolean;
   isPublished: boolean;
@@ -43,10 +44,12 @@ export type Project = {
 export type Certificate = {
   id: string;
   title: string;
-  issuer: string;
-  issuedAt: string | null;
-  credentialUrl: string | null;
+  institution: string;
+  category: string | null;
+  certificateUrl: string | null;
   imageUrl: string | null;
+  workload: string | null;
+  completedAt: string | null;
   sortOrder: number;
   isPublished: boolean;
 };
@@ -71,4 +74,3 @@ export type PortfolioContent = {
   certificates: Certificate[];
   experiences: Experience[];
 };
-

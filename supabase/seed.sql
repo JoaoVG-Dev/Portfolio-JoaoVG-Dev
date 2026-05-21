@@ -215,7 +215,7 @@ insert into public.certificates (
   'Graduação',
   null,
   null,
-  null,
+  'Graduação tecnológica',
   null,
   true,
   10

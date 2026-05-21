@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Award, ExternalLink, ImageIcon } from 'lucide-react';
 import { usePortfolioContent } from '../hooks/usePortfolioContent';
 import '../styles/public.css';
 
@@ -7,20 +8,63 @@ const navItems = [
   { label: 'Skills', href: '#skills' },
   { label: 'About me', href: '#about' },
   { label: 'Projects', href: '#projects' },
+  { label: 'Certifications', href: '#certifications' },
   { label: 'Contact', href: '#contact' },
 ];
+
+function formatDate(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR', {
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function ProjectImage({ src, title }: { src: string; title: string }) {
+  const [hasError, setHasError] = useState(false);
+  const canShowImage = Boolean(src) && !hasError;
+
+  if (!canShowImage) {
+    return (
+      <div className="project-media-fallback" aria-label={`Imagem indisponível para ${title}`}>
+        <ImageIcon size={28} />
+        <span>{title}</span>
+      </div>
+    );
+  }
+
+  return <img src={src} alt={title} onError={() => setHasError(true)} />;
+}
+
+function CertificateImage({ src, title }: { src: string | null; title: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!src || hasError) {
+    return (
+      <div className="certificate-media-fallback">
+        <Award size={30} />
+      </div>
+    );
+  }
+
+  return <img src={src} alt={title} onError={() => setHasError(true)} />;
+}
 
 export function PublicPortfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { content, isLoading } = usePortfolioContent();
-  const { profile, technologies, projects } = content;
+  const { profile, technologies, projects, certificates } = content;
   const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
   const publishedProjects = projects.filter((project) => project.isPublished);
+  const publishedCertificates = certificates.filter((certificate) => certificate.isPublished);
 
   const closeMenu = () => setIsMenuOpen(false);
 
   useEffect(() => {
-    const projectCards = document.querySelectorAll('.card-project');
+    const projectCards = document.querySelectorAll('.card-project, .certificate-card');
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -33,7 +77,7 @@ export function PublicPortfolio() {
     projectCards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [publishedProjects.length]);
+  }, [publishedProjects.length, publishedCertificates.length]);
 
   return (
     <div className="portfolio-page" aria-busy={isLoading}>
@@ -138,10 +182,21 @@ export function PublicPortfolio() {
               return (
                 <div className="card-project" key={project.id}>
                   <div className="project">
-                    <img src={project.imageUrl} alt={project.title} />
-                    <p>
-                      {project.title} | {project.category}
-                    </p>
+                    <div className="project-media">
+                      <ProjectImage src={project.imageUrl} title={project.title} />
+                    </div>
+                    <div className="project-body">
+                      <p>
+                        {project.title} | {project.category}
+                      </p>
+                      {project.technologies.length > 0 && (
+                        <div className="project-tech-list" aria-label="Tecnologias usadas">
+                          {project.technologies.map((technology) => (
+                            <span key={`${project.id}-${technology.id}`}>{technology.name}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <a
                       className="project-button"
                       href={projectHref}
@@ -154,6 +209,53 @@ export function PublicPortfolio() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        <section id="certifications" className="certifications-section" aria-labelledby="certifications-title">
+          <div className="certifications-inner">
+            <header className="certifications-header">
+              <p>Credentials</p>
+              <h1 id="certifications-title">Certifications</h1>
+            </header>
+
+            <div className="certificates-grid">
+              {publishedCertificates.map((certificate) => {
+                const completedAt = formatDate(certificate.completedAt);
+
+                return (
+                  <article className="certificate-card" key={certificate.id}>
+                    <div className="certificate-media">
+                      <CertificateImage src={certificate.imageUrl} title={certificate.title} />
+                    </div>
+                    <div className="certificate-content">
+                      <div>
+                        <p className="certificate-kicker">{certificate.category ?? 'Certificate'}</p>
+                        <h2>{certificate.title}</h2>
+                        {certificate.institution && <p>{certificate.institution}</p>}
+                      </div>
+
+                      <div className="certificate-meta">
+                        {certificate.workload && <span>{certificate.workload}</span>}
+                        {completedAt && <span>{completedAt}</span>}
+                      </div>
+
+                      {certificate.certificateUrl && (
+                        <a
+                          className="certificate-link"
+                          href={certificate.certificateUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Ver certificado
+                          <ExternalLink size={15} />
+                        </a>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
 

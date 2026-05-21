@@ -49,6 +49,12 @@ type ProjectRow = {
   display_order: number | null;
   started_at: string | null;
   completed_at: string | null;
+  project_technologies?: ProjectTechnologyRow[] | null;
+};
+
+type ProjectTechnologyRow = {
+  technology_id: string | null;
+  technologies: TechnologyRow | TechnologyRow[] | null;
 };
 
 type CertificateRow = {
@@ -115,6 +121,14 @@ const mapTechnology = (row: TechnologyRow): Technology => ({
   isFeatured: row.active ?? true,
 });
 
+const normalizeTechnologyRelation = (relation: ProjectTechnologyRow): Technology | null => {
+  const technology = Array.isArray(relation.technologies)
+    ? relation.technologies[0]
+    : relation.technologies;
+
+  return technology ? mapTechnology(technology) : null;
+};
+
 const mapProject = (row: ProjectRow): Project => ({
   id: row.id,
   title: row.title,
@@ -124,6 +138,9 @@ const mapProject = (row: ProjectRow): Project => ({
   imageUrl: row.cover_url ?? '',
   liveUrl: row.deploy_url,
   repositoryUrl: row.github_url,
+  technologies: (row.project_technologies ?? [])
+    .map(normalizeTechnologyRelation)
+    .filter((technology): technology is Technology => Boolean(technology)),
   sortOrder: row.display_order ?? 0,
   isFeatured: row.featured ?? false,
   isPublished: row.active ?? true,
@@ -132,10 +149,12 @@ const mapProject = (row: ProjectRow): Project => ({
 const mapCertificate = (row: CertificateRow): Certificate => ({
   id: row.id,
   title: row.title,
-  issuer: row.institution ?? row.category ?? '',
-  issuedAt: row.completed_at,
-  credentialUrl: row.certificate_url,
+  institution: row.institution ?? '',
+  category: row.category,
+  certificateUrl: row.certificate_url,
   imageUrl: row.image_url,
+  workload: row.workload,
+  completedAt: row.completed_at,
   sortOrder: row.display_order ?? 0,
   isPublished: row.active ?? true,
 });
@@ -162,7 +181,11 @@ export async function fetchPortfolioContent(): Promise<PortfolioContent> {
     const [profile, technologies, projects, certificates, experiences] = await Promise.all([
       supabase.from('profiles').select('*').eq('active', true).limit(1).maybeSingle(),
       supabase.from('technologies').select('*').eq('active', true).order('display_order'),
-      supabase.from('projects').select('*').eq('active', true).order('display_order'),
+      supabase
+        .from('projects')
+        .select('*, project_technologies(technology_id, technologies(*))')
+        .eq('active', true)
+        .order('display_order'),
       supabase.from('certificates').select('*').eq('active', true).order('display_order'),
       supabase.from('experiences').select('*').eq('active', true).order('display_order'),
     ]);
