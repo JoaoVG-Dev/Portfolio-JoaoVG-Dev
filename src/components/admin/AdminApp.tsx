@@ -139,7 +139,7 @@ export function AdminApp() {
             <h1>Acesso administrativo não liberado</h1>
             <p>
               Este usuário existe no Auth, mas precisa estar cadastrado em
-              `public.admin_users`.
+              `public.profiles` com `role = 'admin'`.
             </p>
           </div>
           {authError && <p className="admin-form-error">{authError}</p>}
