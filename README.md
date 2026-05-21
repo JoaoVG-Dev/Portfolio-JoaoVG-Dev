@@ -168,6 +168,16 @@ Após login com o usuário admin, o painel gerencia:
 - Certificados
 - Experiências
 
+### Uso do CMS
+
+Projetos usam `cover_url` como URL da imagem de capa. O formulário mostra preview da imagem e mantém um fallback visual quando a URL estiver vazia ou quebrada. O upload real de arquivos não foi habilitado nesta etapa; use uma URL pública ou um caminho de asset já servido pelo app.
+
+As tecnologias de um projeto são gerenciadas pela relação `project_technologies`. Cadastre tecnologias primeiro, depois selecione os chips no formulário de projeto. Ao salvar, o CMS sincroniza as relações marcadas, incluindo remoções.
+
+O campo `display_order` não aparece mais como input comum no cadastro. Novos projetos, tecnologias, certificados e experiências entram automaticamente no fim da lista usando o maior `display_order` atual + 1.
+
+Certificados cadastrados com `active = true` aparecem na seção pública `#certifications`. Use `image_url` para capa do certificado e `certificate_url` para o botão `Ver certificado`.
+
 ## Fallback
 
 Se o Supabase estiver sem tabelas, vazio, offline ou com erro de permissão, a página pública usa `src/data/fallbackPortfolio.ts`. Isso mantém o portfólio online enquanto o banco é configurado.
