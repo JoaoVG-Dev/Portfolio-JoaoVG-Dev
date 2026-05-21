@@ -1,90 +1,104 @@
 create extension if not exists pgcrypto;
 
-create table if not exists public.admin_users (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now()
-);
+drop table if exists public.project_technologies cascade;
+drop table if exists public.experiences cascade;
+drop table if exists public.certificates cascade;
+drop table if exists public.projects cascade;
+drop table if exists public.technologies cascade;
+drop table if exists public.profiles cascade;
+drop table if exists public.admin_users cascade;
+drop function if exists public.is_admin() cascade;
+drop function if exists public.set_updated_at() cascade;
 
-create table if not exists public.profiles (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  role text not null,
-  headline text not null,
-  summary text not null,
-  bio text[] not null default '{}',
-  email text not null,
-  location text not null,
-  whatsapp_url text not null,
-  github_url text not null,
-  linkedin_url text not null,
-  instagram_url text not null,
-  cv_url text not null,
-  avatar_url text not null,
-  is_published boolean not null default true,
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  name text,
+  title text,
+  bio text,
+  avatar_url text,
+  github_url text,
+  linkedin_url text,
+  whatsapp_url text,
+  email text,
+  role text not null default 'admin',
+  active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.technologies (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  icon_url text not null,
-  category text not null,
-  sort_order integer not null default 0,
-  is_featured boolean not null default true,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.projects (
+create table public.projects (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  slug text not null unique,
-  category text not null,
-  description text not null,
-  image_url text not null,
-  live_url text,
-  repository_url text,
-  sort_order integer not null default 0,
-  is_featured boolean not null default true,
-  is_published boolean not null default true,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  slug text unique,
+  short_description text,
+  description text,
+  cover_url text,
+  github_url text,
+  deploy_url text,
+  status text default 'finalizado',
+  featured boolean default false,
+  active boolean default true,
+  display_order integer default 0,
+  started_at date,
+  completed_at date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
-create table if not exists public.certificates (
+create table public.technologies (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  category text,
+  level text,
+  icon_url text,
+  active boolean default true,
+  display_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table public.project_technologies (
+  project_id uuid references public.projects(id) on delete cascade,
+  technology_id uuid references public.technologies(id) on delete cascade,
+  primary key (project_id, technology_id)
+);
+
+create table public.certificates (
   id uuid primary key default gen_random_uuid(),
   title text not null,
-  issuer text not null,
-  issued_at date,
-  credential_url text,
+  institution text,
+  category text,
+  certificate_url text,
   image_url text,
-  sort_order integer not null default 0,
-  is_published boolean not null default true,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  workload text,
+  completed_at date,
+  active boolean default true,
+  display_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
-create table if not exists public.experiences (
+create table public.experiences (
   id uuid primary key default gen_random_uuid(),
-  company text not null,
   role text not null,
-  location text not null,
-  start_date date not null,
+  company text,
+  start_date date,
   end_date date,
-  description text not null,
-  type text not null default 'personal' check (type in ('full-time', 'freelance', 'study', 'personal')),
-  sort_order integer not null default 0,
-  is_published boolean not null default true,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  current boolean default false,
+  description text,
+  active boolean default true,
+  display_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
-create index if not exists profiles_public_idx on public.profiles (is_published);
-create index if not exists technologies_featured_idx on public.technologies (is_featured, sort_order);
-create index if not exists projects_public_idx on public.projects (is_published, sort_order);
-create index if not exists certificates_public_idx on public.certificates (is_published, sort_order);
-create index if not exists experiences_public_idx on public.experiences (is_published, sort_order);
+create index profiles_active_idx on public.profiles (active);
+create index projects_active_order_idx on public.projects (active, display_order);
+create index technologies_active_order_idx on public.technologies (active, display_order);
+create index certificates_active_order_idx on public.certificates (active, display_order);
+create index experiences_active_order_idx on public.experiences (active, display_order);
+create index project_technologies_project_idx on public.project_technologies (project_id);
+create index project_technologies_technology_idx on public.project_technologies (technology_id);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -100,12 +114,12 @@ create trigger profiles_set_updated_at
 before update on public.profiles
 for each row execute function public.set_updated_at();
 
-create trigger technologies_set_updated_at
-before update on public.technologies
-for each row execute function public.set_updated_at();
-
 create trigger projects_set_updated_at
 before update on public.projects
+for each row execute function public.set_updated_at();
+
+create trigger technologies_set_updated_at
+before update on public.technologies
 for each row execute function public.set_updated_at();
 
 create trigger certificates_set_updated_at
@@ -125,29 +139,25 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from public.admin_users
-    where user_id = auth.uid()
+    from public.profiles
+    where id = auth.uid()
+      and role = 'admin'
+      and active = true
   );
 $$;
 
-alter table public.admin_users enable row level security;
 alter table public.profiles enable row level security;
-alter table public.technologies enable row level security;
 alter table public.projects enable row level security;
+alter table public.technologies enable row level security;
+alter table public.project_technologies enable row level security;
 alter table public.certificates enable row level security;
 alter table public.experiences enable row level security;
 
-create policy "admins can view admin users"
-on public.admin_users
-for select
-to authenticated
-using (public.is_admin());
-
-create policy "public can read published profiles"
+create policy "public can read active profiles"
 on public.profiles
 for select
 to anon, authenticated
-using (is_published = true);
+using (active = true);
 
 create policy "admins can manage profiles"
 on public.profiles
@@ -156,24 +166,11 @@ to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
-create policy "public can read featured technologies"
-on public.technologies
-for select
-to anon, authenticated
-using (is_featured = true);
-
-create policy "admins can manage technologies"
-on public.technologies
-for all
-to authenticated
-using (public.is_admin())
-with check (public.is_admin());
-
-create policy "public can read published projects"
+create policy "public can read active projects"
 on public.projects
 for select
 to anon, authenticated
-using (is_published = true);
+using (active = true);
 
 create policy "admins can manage projects"
 on public.projects
@@ -182,11 +179,50 @@ to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
-create policy "public can read published certificates"
+create policy "public can read active technologies"
+on public.technologies
+for select
+to anon, authenticated
+using (active = true);
+
+create policy "admins can manage technologies"
+on public.technologies
+for all
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+create policy "public can read active project technologies"
+on public.project_technologies
+for select
+to anon, authenticated
+using (
+  exists (
+    select 1
+    from public.projects
+    where projects.id = project_technologies.project_id
+      and projects.active = true
+  )
+  and exists (
+    select 1
+    from public.technologies
+    where technologies.id = project_technologies.technology_id
+      and technologies.active = true
+  )
+);
+
+create policy "admins can manage project technologies"
+on public.project_technologies
+for all
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+create policy "public can read active certificates"
 on public.certificates
 for select
 to anon, authenticated
-using (is_published = true);
+using (active = true);
 
 create policy "admins can manage certificates"
 on public.certificates
@@ -195,11 +231,11 @@ to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
-create policy "public can read published experiences"
+create policy "public can read active experiences"
 on public.experiences
 for select
 to anon, authenticated
-using (is_published = true);
+using (active = true);
 
 create policy "admins can manage experiences"
 on public.experiences
@@ -207,4 +243,3 @@ for all
 to authenticated
 using (public.is_admin())
 with check (public.is_admin());
-
