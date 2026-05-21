@@ -21,6 +21,11 @@ export type TechnologyOption = {
   name: string;
 };
 
+type ProjectTechnologyRecord = {
+  technology_id: string | null;
+  technologies: { name: string | null } | { name: string | null }[] | null;
+};
+
 export type ProfileSettingsRecord = {
   id: string;
   name: string;
@@ -43,13 +48,42 @@ function getClient() {
 
 export async function fetchCmsRecords(config: CmsResourceConfig): Promise<CmsRecord[]> {
   const client = getClient();
-  const { data, error } = await client
-    .from(config.table)
-    .select('*')
-    .order('display_order', { ascending: true });
+  const query =
+    config.key === 'projects'
+      ? client
+          .from(config.table)
+          .select('*, project_technologies(technology_id, technologies(name))')
+          .order('display_order', { ascending: true })
+      : client.from(config.table).select('*').order('display_order', { ascending: true });
 
+  const { data, error } = await query;
   if (error) {
     throw error;
+  }
+
+  if (config.key === 'projects') {
+    return (data ?? []).map((record) => {
+      const project = record as CmsRecord & {
+        project_technologies?: ProjectTechnologyRecord[] | null;
+      };
+      const relations = project.project_technologies ?? [];
+
+      return {
+        ...project,
+        technology_ids: relations
+          .map((relation) => relation.technology_id)
+          .filter((id): id is string => Boolean(id)),
+        technology_names: relations
+          .map((relation) => {
+            const technology = Array.isArray(relation.technologies)
+              ? relation.technologies[0]
+              : relation.technologies;
+
+            return technology?.name ?? null;
+          })
+          .filter((name): name is string => Boolean(name)),
+      };
+    }) as CmsRecord[];
   }
 
   return (data ?? []) as CmsRecord[];

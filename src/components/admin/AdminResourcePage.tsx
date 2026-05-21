@@ -1,8 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   Check,
+  ExternalLink,
   Eye,
   EyeOff,
+  ImageIcon,
   Pencil,
   Plus,
   RotateCcw,
@@ -31,7 +33,7 @@ function cloneRecord(record: CmsRecord): CmsRecord {
   return { ...record };
 }
 
-function normalizeValue(field: CmsField, value: CmsRecordValue | undefined): CmsRecordValue {
+function normalizeValue(field: CmsField, value: CmsRecordValue | string[] | undefined): CmsRecordValue {
   if (field.type === 'number') {
     return Number(value ?? 0);
   }
@@ -44,14 +46,72 @@ function normalizeValue(field: CmsField, value: CmsRecordValue | undefined): Cms
     return field.required ? '' : null;
   }
 
+  if (Array.isArray(value)) {
+    return null;
+  }
+
   return value ?? null;
 }
 
 function buildPayload(config: CmsResourceConfig, formRecord: CmsRecord): CmsRecord {
   return config.fields.reduce<CmsRecord>((payload, field) => {
+    if (field.name === 'display_order') {
+      return payload;
+    }
+
     payload[field.name] = normalizeValue(field, formRecord[field.name]);
     return payload;
   }, {});
+}
+
+function getStringValue(record: CmsRecord, key: string) {
+  const value = record[key];
+  return typeof value === 'string' ? value : '';
+}
+
+function getStringArray(record: CmsRecord, key: string) {
+  const value = record[key];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function getNextDisplayOrder(records: CmsRecord[]) {
+  const maxOrder = records.reduce((max, record) => {
+    const value = record.display_order;
+    return typeof value === 'number' && value > max ? value : max;
+  }, 0);
+
+  return maxOrder + 1;
+}
+
+function formatDate(value: CmsRecordValue | string[] | undefined) {
+  if (typeof value !== 'string' || !value) {
+    return null;
+  }
+
+  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR');
+}
+
+function ImagePreview({ alt, src }: { alt: string; src: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  if (!src || hasError) {
+    return (
+      <div className="cms-image-preview is-empty">
+        <ImageIcon size={22} />
+        <span>{src ? 'Não foi possível carregar esta imagem.' : 'Preview da imagem aparecerá aqui.'}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cms-image-preview">
+      <img src={src} alt={alt} onError={() => setHasError(true)} />
+    </div>
+  );
 }
 
 export function AdminResourcePage({ config }: AdminResourcePageProps) {
@@ -67,11 +127,56 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
   const [selectedTechnologyIds, setSelectedTechnologyIds] = useState<string[]>([]);
 
   const isProjectResource = config.key === 'projects';
+  const isCertificateResource = config.key === 'certificates';
 
   const formTitle = useMemo(
     () => (editingId ? `Editar ${config.singular}` : `Novo ${config.singular}`),
     [config.singular, editingId],
   );
+
+  const fieldGroups = useMemo(() => {
+    const fields = config.fields.filter((field) => field.name !== 'display_order');
+
+    if (isProjectResource) {
+      return [
+        {
+          title: 'Informações principais',
+          fields: fields.filter((field) =>
+            ['title', 'slug', 'short_description', 'description', 'started_at', 'completed_at'].includes(field.name),
+          ),
+        },
+        {
+          title: 'Links e imagem',
+          fields: fields.filter((field) => ['cover_url', 'github_url', 'deploy_url'].includes(field.name)),
+        },
+        {
+          title: 'Status e publicação',
+          fields: fields.filter((field) => ['status', 'featured', 'active'].includes(field.name)),
+        },
+      ];
+    }
+
+    if (isCertificateResource) {
+      return [
+        {
+          title: 'Informações principais',
+          fields: fields.filter((field) =>
+            ['title', 'institution', 'category', 'workload', 'completed_at'].includes(field.name),
+          ),
+        },
+        {
+          title: 'Imagem e credencial',
+          fields: fields.filter((field) => ['image_url', 'certificate_url'].includes(field.name)),
+        },
+        {
+          title: 'Publicação',
+          fields: fields.filter((field) => ['active'].includes(field.name)),
+        },
+      ];
+    }
+
+    return [{ title: 'Informações', fields }];
+  }, [config.fields, isCertificateResource, isProjectResource]);
 
   async function refreshRecords() {
     setIsLoading(true);
@@ -111,7 +216,10 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
   function startCreate() {
     setEditingId(null);
-    setFormRecord(cloneRecord(config.initialRecord));
+    setFormRecord({
+      ...cloneRecord(config.initialRecord),
+      display_order: getNextDisplayOrder(records),
+    });
     setSelectedTechnologyIds([]);
     setStatusMessage(null);
     setErrorMessage(null);
@@ -121,6 +229,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
   async function startEdit(record: CmsRecord) {
     setEditingId(String(record.id));
     setFormRecord(cloneRecord(record));
+    setSelectedTechnologyIds(getStringArray(record, 'technology_ids'));
     setStatusMessage(null);
     setErrorMessage(null);
     setIsFormOpen(true);
@@ -150,6 +259,11 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
     try {
       const payload = buildPayload(config, formRecord);
+
+      if (!editingId && config.fields.some((field) => field.name === 'display_order')) {
+        payload.display_order = getNextDisplayOrder(records);
+      }
+
       const savedRecord = editingId
         ? await updateCmsRecord(config, editingId, payload)
         : await createCmsRecord(config, payload);
@@ -236,6 +350,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
   function renderField(field: CmsField) {
     const value = formRecord[field.name];
+    const fieldId = `${config.key}-${field.name}`;
 
     if (field.type === 'textarea') {
       return (
@@ -278,8 +393,9 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
       );
     }
 
-    return (
+    const input = (
       <input
+        id={fieldId}
         type={field.type}
         value={String(value ?? '')}
         onChange={(event) =>
@@ -288,6 +404,133 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
         required={field.required}
         placeholder={field.placeholder}
       />
+    );
+
+    if (field.name === 'cover_url' || field.name === 'image_url') {
+      return (
+        <>
+          {input}
+          <ImagePreview
+            src={String(value ?? '')}
+            alt={field.name === 'cover_url' ? 'Preview da imagem de capa do projeto' : 'Preview do certificado'}
+          />
+        </>
+      );
+    }
+
+    return input;
+  }
+
+  function renderTechnologySelector() {
+    const selectedTechnologies = technologyOptions.filter((technology) =>
+      selectedTechnologyIds.includes(technology.id),
+    );
+
+    return (
+      <fieldset className="cms-form-group cms-relation-field">
+        <legend>Tecnologias usadas</legend>
+        <p className="cms-field-hint">Selecione uma ou mais tecnologias já cadastradas para este projeto.</p>
+        {technologyOptions.length === 0 && (
+          <p className="cms-empty-state">Cadastre tecnologias antes de associá-las a um projeto.</p>
+        )}
+        <div className="cms-chip-grid">
+          {technologyOptions.map((technology) => (
+            <label className="cms-relation-chip" key={technology.id}>
+              <input
+                type="checkbox"
+                checked={selectedTechnologyIds.includes(technology.id)}
+                onChange={() => toggleTechnology(technology.id)}
+              />
+              <span>{technology.name}</span>
+            </label>
+          ))}
+        </div>
+        {selectedTechnologies.length > 0 && (
+          <div className="cms-selected-stack" aria-label="Tecnologias selecionadas">
+            {selectedTechnologies.map((technology) => (
+              <span className="cms-status is-featured" key={technology.id}>
+                {technology.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </fieldset>
+    );
+  }
+
+  function renderRecordMedia(record: CmsRecord) {
+    const src = getStringValue(record, isProjectResource ? 'cover_url' : 'image_url');
+
+    if (!isProjectResource && !isCertificateResource) {
+      return null;
+    }
+
+    return (
+      <div className="cms-record-media">
+        <ImageIcon size={20} />
+        {src && (
+          <img
+            src={src}
+            alt={config.getTitle(record)}
+            onError={(event) => {
+              event.currentTarget.remove();
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  function renderRecordMeta(record: CmsRecord) {
+    const technologyNames = getStringArray(record, 'technology_names');
+    const certificateUrl = getStringValue(record, 'certificate_url');
+    const completedAt = formatDate(record.completed_at);
+
+    return (
+      <>
+        {isProjectResource && (
+          <div className="cms-record-badges">
+            {getStringValue(record, 'status') && (
+              <span className="cms-status">{getStringValue(record, 'status')}</span>
+            )}
+            <span className={record.active ? 'cms-status is-active' : 'cms-status'}>
+              {record.active ? 'Ativo' : 'Inativo'}
+            </span>
+            {record.featured && <span className="cms-status is-featured">Destaque</span>}
+          </div>
+        )}
+        {isProjectResource && technologyNames.length > 0 && (
+          <div className="cms-record-badges">
+            {technologyNames.map((name) => (
+              <span className="cms-tech-badge" key={name}>
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
+        {isCertificateResource && (
+          <div className="cms-record-badges">
+            {getStringValue(record, 'category') && (
+              <span className="cms-status">{getStringValue(record, 'category')}</span>
+            )}
+            {completedAt && <span className="cms-status">Concluído em {completedAt}</span>}
+            <span className={record.active ? 'cms-status is-active' : 'cms-status'}>
+              {record.active ? 'Ativo' : 'Inativo'}
+            </span>
+            {certificateUrl && (
+              <a className="cms-inline-link" href={certificateUrl} target="_blank" rel="noreferrer">
+                <ExternalLink size={14} />
+                Ver certificado
+              </a>
+            )}
+          </div>
+        )}
+        {!isProjectResource && !isCertificateResource && (
+          <span className={record.active ? 'cms-status is-active' : 'cms-status'}>
+            {record.active ? 'Ativo' : 'Inativo'}
+          </span>
+        )}
+      </>
     );
   }
 
@@ -324,36 +567,24 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
           </header>
 
           <form className="cms-form" onSubmit={handleSubmit}>
-            {config.fields.map((field) => (
-              <label
-                className={field.type === 'textarea' || field.type === 'url' ? 'cms-field wide' : 'cms-field'}
-                key={field.name}
-              >
-                {field.label}
-                {renderField(field)}
-              </label>
-            ))}
-
-            {isProjectResource && (
-              <fieldset className="cms-field wide cms-relation-field">
-                <legend>Tecnologias associadas</legend>
-                {technologyOptions.length === 0 && (
-                  <p className="cms-empty-state">Cadastre tecnologias antes de associá-las ao projeto.</p>
-                )}
-                <div className="cms-chip-grid">
-                  {technologyOptions.map((technology) => (
-                    <label className="cms-relation-chip" key={technology.id}>
-                      <input
-                        type="checkbox"
-                        checked={selectedTechnologyIds.includes(technology.id)}
-                        onChange={() => toggleTechnology(technology.id)}
-                      />
-                      <span>{technology.name}</span>
+            {fieldGroups.map((group) => (
+              <fieldset className="cms-form-group" key={group.title}>
+                <legend>{group.title}</legend>
+                <div className="cms-form-grid">
+                  {group.fields.map((field) => (
+                    <label
+                      className={field.type === 'textarea' || field.type === 'url' ? 'cms-field wide' : 'cms-field'}
+                      key={field.name}
+                    >
+                      {field.label}
+                      {renderField(field)}
                     </label>
                   ))}
                 </div>
               </fieldset>
-            )}
+            ))}
+
+            {isProjectResource && renderTechnologySelector()}
 
             <div className="cms-form-actions">
               <button type="submit" disabled={isSaving}>
@@ -387,15 +618,13 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
           {!isLoading &&
             records.map((record) => (
               <article className="cms-record-row" key={record.id}>
-                <div>
-                  <h3>{config.getTitle(record)}</h3>
-                  <p>{config.getSubtitle(record)}</p>
-                  <span className={record.active ? 'cms-status is-active' : 'cms-status'}>
-                    {record.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                  {isProjectResource && record.featured && (
-                    <span className="cms-status is-featured">Destaque</span>
-                  )}
+                <div className="cms-record-main">
+                  {renderRecordMedia(record)}
+                  <div className="cms-record-copy">
+                    <h3>{config.getTitle(record)}</h3>
+                    <p>{config.getSubtitle(record)}</p>
+                    {renderRecordMeta(record)}
+                  </div>
                 </div>
                 <div className="cms-record-actions">
                   <button type="button" onClick={() => startEdit(record)}>

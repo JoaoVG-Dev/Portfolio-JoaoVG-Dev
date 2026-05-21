@@ -119,6 +119,11 @@
   line-height: 1.6;
 }
 
+.cms-field input::placeholder,
+.cms-field textarea::placeholder {
+  color: rgba(158, 142, 142, 0.48);
+}
+
 .admin-login-form input:focus,
 .cms-field input:focus,
 .cms-field textarea:focus,
@@ -481,7 +486,39 @@
 }
 
 .cms-form {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
+}
+
+.cms-form-group {
+  min-width: 0;
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.cms-form-group legend {
+  padding: 0 0.45rem;
+  color: var(--red-light);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cms-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.cms-field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .cms-form-actions,
@@ -506,12 +543,65 @@
   padding: 0 0.85rem;
 }
 
+.cms-form-actions button {
+  flex: 1 1 170px;
+}
+
+.cms-record-actions button {
+  flex: 1 1 140px;
+}
+
 .cms-secondary-button {
   color: var(--muted);
 }
 
 .cms-record-row p {
   margin: 0.25rem 0 0;
+}
+
+.cms-record-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.cms-record-media {
+  width: 72px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--red-light);
+  background:
+    linear-gradient(135deg, rgba(139, 0, 0, 0.18), rgba(0, 0, 0, 0.25)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.cms-record-media img {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cms-record-media svg {
+  grid-area: 1 / 1;
+}
+
+.cms-record-copy {
+  min-width: 0;
+}
+
+.cms-record-badges,
+.cms-selected-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
 }
 
 .cms-record-actions button:last-child {
@@ -543,15 +633,67 @@
   color: var(--red-light);
 }
 
-.cms-relation-field {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
+.cms-tech-badge {
+  display: inline-flex;
+  width: max-content;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid rgba(255, 107, 91, 0.22);
+  border-radius: 999px;
+  padding: 0 0.6rem;
+  color: var(--muted);
+  background: rgba(139, 0, 0, 0.12);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
-.cms-relation-field legend {
-  padding: 0 0.5rem;
+.cms-inline-link {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   color: var(--red-light);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.cms-image-preview {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(139, 0, 0, 0.16), rgba(0, 0, 0, 0.18)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.cms-image-preview img {
+  width: 100%;
+  max-height: 240px;
+  display: block;
+  object-fit: contain;
+}
+
+.cms-image-preview.is-empty {
+  align-content: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  color: var(--red-light);
+  text-align: center;
+}
+
+.cms-image-preview.is-empty span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cms-relation-field {
+  grid-column: 1 / -1;
 }
 
 .cms-chip-grid {
@@ -621,10 +763,18 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
+  .cms-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-recent-row,
   .cms-record-row {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .cms-record-actions button {
+    flex: 0 0 auto;
   }
 }
 

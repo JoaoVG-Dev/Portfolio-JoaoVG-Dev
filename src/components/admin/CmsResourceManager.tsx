@@ -16,7 +16,7 @@ function cloneRecord(record: CmsRecord): CmsRecord {
   return { ...record };
 }
 
-function normalizeValue(field: CmsField, value: CmsRecordValue | undefined): CmsRecordValue {
+function normalizeValue(field: CmsField, value: CmsRecordValue | string[] | undefined): CmsRecordValue {
   if (field.type === 'number') {
     return Number(value ?? 0);
   }
@@ -27,6 +27,10 @@ function normalizeValue(field: CmsField, value: CmsRecordValue | undefined): Cms
 
   if (value === '') {
     return field.required ? '' : null;
+  }
+
+  if (Array.isArray(value)) {
+    return null;
   }
 
   return value ?? null;
@@ -268,4 +272,3 @@ export function CmsResourceManager({ config }: CmsResourceManagerProps) {
     </section>
   );
 }
-

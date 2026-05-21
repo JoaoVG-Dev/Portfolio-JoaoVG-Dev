@@ -20,7 +20,7 @@ export type CmsRecordValue = string | number | boolean | null;
 
 export type CmsRecord = {
   id?: string;
-  [key: string]: CmsRecordValue | undefined;
+  [key: string]: CmsRecordValue | string[] | undefined;
 };
 
 export type CmsResourceConfig = {
@@ -34,4 +34,3 @@ export type CmsResourceConfig = {
   getTitle: (record: CmsRecord) => string;
   getSubtitle: (record: CmsRecord) => string;
 };
-
