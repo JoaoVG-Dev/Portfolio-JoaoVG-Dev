@@ -24,6 +24,16 @@ export type CmsRecord = {
   [key: string]: CmsRecordValue | string[] | undefined;
 };
 
+export type CmsProjectRecord = CmsRecord & {
+  active: boolean;
+  featured: boolean;
+};
+
+export type CmsCertificateRecord = CmsRecord & {
+  active: boolean;
+  featured: boolean;
+};
+
 export type CmsResourceConfig = {
   key: CmsResourceKey;
   table: CmsResourceKey;

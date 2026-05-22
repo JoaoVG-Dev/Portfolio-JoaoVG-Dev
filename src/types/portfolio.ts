@@ -37,6 +37,8 @@ export type Project = {
   repositoryUrl: string | null;
   technologies: Technology[];
   sortOrder: number;
+  featured: boolean;
+  active: boolean;
   isFeatured: boolean;
   isPublished: boolean;
 };
@@ -51,6 +53,8 @@ export type Certificate = {
   workload: string | null;
   completedAt: string | null;
   sortOrder: number;
+  featured: boolean;
+  active: boolean;
   isFeatured: boolean;
   isPublished: boolean;
 };

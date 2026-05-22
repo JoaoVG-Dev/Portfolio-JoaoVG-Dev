@@ -113,9 +113,9 @@ function ProfileAvatar({ name, src }: { name: string; src: string }) {
 export function PublicPortfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { content, isLoading } = usePortfolioContent();
-  const projectAnimationCount = content?.projects.filter((project) => project.isPublished).length ?? 0;
+  const projectAnimationCount = content?.projects.filter((project) => project.active === true).length ?? 0;
   const certificateAnimationCount =
-    content?.certificates.filter((certificate) => certificate.isPublished).length ?? 0;
+    content?.certificates.filter((certificate) => certificate.active === true).length ?? 0;
 
   useEffect(() => {
     if (!content) {
@@ -150,10 +150,10 @@ export function PublicPortfolio() {
   const { profile, technologies, projects, certificates } = content;
   const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
   const publishedProjects = [...projects]
-    .filter((project) => project.isPublished)
+    .filter((project) => project.active === true)
     .sort(compareFeaturedFirst);
   const visibleCertificates = [...certificates]
-    .filter((certificate) => certificate.isPublished)
+    .filter((certificate) => certificate.active === true)
     .sort(compareCertificates);
 
   const closeMenu = () => setIsMenuOpen(false);

@@ -9,9 +9,17 @@ type PortfolioContentState = {
   isLoading: boolean;
 };
 
+function normalizePublicContent(content: PortfolioContent): PortfolioContent {
+  return {
+    ...content,
+    projects: content.projects.filter((project) => project.active === true),
+    certificates: content.certificates.filter((certificate) => certificate.active === true),
+  };
+}
+
 export function usePortfolioContent(): PortfolioContentState {
   const [content, setContent] = useState<PortfolioContent | null>(() =>
-    isSupabaseConfigured ? null : fallbackPortfolio,
+    isSupabaseConfigured ? null : normalizePublicContent(fallbackPortfolio),
   );
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
 
@@ -27,7 +35,7 @@ export function usePortfolioContent(): PortfolioContentState {
     fetchPortfolioContent()
       .then((nextContent) => {
         if (isMounted) {
-          setContent(nextContent);
+          setContent(normalizePublicContent(nextContent));
         }
       })
       .finally(() => {

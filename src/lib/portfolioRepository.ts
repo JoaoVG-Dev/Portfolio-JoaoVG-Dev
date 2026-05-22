@@ -171,6 +171,44 @@ const orderRows = <T extends { completed_at: string | null; display_order: numbe
   rows: T[],
 ) => [...rows].sort(comparePublicRows);
 
+const orderPublicProjects = (projects: Project[]) => [...projects].sort((first, second) => {
+  const featuredDifference = Number(second.featured) - Number(first.featured);
+
+  if (featuredDifference !== 0) {
+    return featuredDifference;
+  }
+
+  return first.sortOrder - second.sortOrder;
+});
+
+const orderPublicCertificates = (certificates: Certificate[]) => [...certificates].sort((first, second) => {
+  const featuredDifference = Number(second.featured) - Number(first.featured);
+
+  if (featuredDifference !== 0) {
+    return featuredDifference;
+  }
+
+  const orderDifference = first.sortOrder - second.sortOrder;
+
+  if (orderDifference !== 0) {
+    return orderDifference;
+  }
+
+  return (second.completedAt ?? '').localeCompare(first.completedAt ?? '');
+});
+
+const visibleFallbackProjects = () =>
+  orderPublicProjects(fallbackPortfolio.projects.filter((project) => project.active === true));
+
+const visibleFallbackCertificates = () =>
+  orderPublicCertificates(fallbackPortfolio.certificates.filter((certificate) => certificate.active === true));
+
+const publicFallbackPortfolio = (): PortfolioContent => ({
+  ...fallbackPortfolio,
+  projects: visibleFallbackProjects(),
+  certificates: visibleFallbackCertificates(),
+});
+
 const mapProfile = (row: ProfileRow): Profile => ({
   id: row.id,
   name: filledValue(row.name, fallbackPortfolio.profile.name),
@@ -220,8 +258,10 @@ const mapProject = (row: ProjectRow): Project => ({
     .map(normalizeTechnologyRelation)
     .filter((technology): technology is Technology => Boolean(technology)),
   sortOrder: row.display_order ?? 0,
-  isFeatured: row.featured ?? false,
-  isPublished: row.active ?? true,
+  featured: row.featured === true,
+  active: row.active === true,
+  isFeatured: row.featured === true,
+  isPublished: row.active === true,
 });
 
 const mapCertificate = (row: CertificateRow): Certificate => ({
@@ -234,8 +274,10 @@ const mapCertificate = (row: CertificateRow): Certificate => ({
   workload: row.workload,
   completedAt: row.completed_at,
   sortOrder: row.display_order ?? 0,
-  isFeatured: row.featured ?? false,
-  isPublished: row.active ?? true,
+  featured: row.featured === true,
+  active: row.active === true,
+  isFeatured: row.featured === true,
+  isPublished: row.active === true,
 });
 
 const mapExperience = (row: ExperienceRow): Experience => ({
@@ -316,9 +358,9 @@ async function fetchProjects(client: SupabaseClient): Promise<Project[]> {
 
     const rows = orderRows((data ?? []) as ProjectRow[]);
 
-    if (rows.length === 0 && fallbackPortfolio.projects.length > 0) {
-      warnInDevelopment('Supabase retornou projetos vazios; verifique seed/RLS.');
-      return fallbackPortfolio.projects;
+    if (rows.length === 0) {
+      warnInDevelopment('Supabase retornou zero projetos ativos; exibindo lista publica vazia.');
+      return [];
     }
 
     return rows.map(mapProject);
@@ -337,15 +379,15 @@ async function fetchProjects(client: SupabaseClient): Promise<Project[]> {
 
       const rows = orderRows((data ?? []) as ProjectRow[]);
 
-      if (rows.length === 0 && fallbackPortfolio.projects.length > 0) {
-        warnInDevelopment('Supabase retornou projetos vazios; verifique seed/RLS.');
-        return fallbackPortfolio.projects;
+      if (rows.length === 0) {
+        warnInDevelopment('Supabase retornou zero projetos ativos; exibindo lista publica vazia.');
+        return [];
       }
 
       return rows.map((row) => mapProject({ ...row, project_technologies: [] }));
     } catch (projectError) {
       warnInDevelopment('Supabase retornou erro ao carregar projetos publicos; usando fallback local da secao.', projectError);
-      return fallbackPortfolio.projects;
+      return visibleFallbackProjects();
     }
   }
 }
@@ -366,15 +408,15 @@ async function fetchCertificates(client: SupabaseClient): Promise<Certificate[]>
 
     const rows = orderRows((data ?? []) as CertificateRow[]);
 
-    if (rows.length === 0 && fallbackPortfolio.certificates.length > 0) {
-      warnInDevelopment('Supabase retornou certificados vazios; verifique seed/RLS.');
-      return fallbackPortfolio.certificates;
+    if (rows.length === 0) {
+      warnInDevelopment('Supabase retornou zero certificados ativos; exibindo lista publica vazia.');
+      return [];
     }
 
     return rows.map(mapCertificate);
   } catch (error) {
     warnInDevelopment('Supabase retornou erro ao carregar certificados publicos; usando fallback local da secao.', error);
-    return fallbackPortfolio.certificates;
+    return visibleFallbackCertificates();
   }
 }
 
@@ -399,7 +441,7 @@ async function fetchExperiences(client: SupabaseClient): Promise<Experience[]> {
 
 export async function fetchPortfolioContent(): Promise<PortfolioContent> {
   if (!supabase) {
-    return fallbackPortfolio;
+    return publicFallbackPortfolio();
   }
 
   const client = supabase;
