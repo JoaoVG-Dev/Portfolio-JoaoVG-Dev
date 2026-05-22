@@ -155,6 +155,16 @@ As tecnologias de um projeto sao gerenciadas pela relacao `project_technologies`
 
 Tecnologias preservam icones pelo campo `icon_url`. Use uma URL SVG/PNG servida pelo app ou por uma CDN confiavel, como devicons. O admin mostra preview do icone; se o icone estiver vazio ou quebrado, o site usa um fallback visual profissional.
 
+### Perfil
+
+O campo `Imagem de avatar` aceita URL externa ou caminho local dentro de `public`, por exemplo:
+
+```text
+/assets/images/DevJoaoG.png
+```
+
+Para imagens salvas como string no Supabase, prefira arquivos dentro de `public/assets`. Assim o navegador consegue carregar o asset tanto no desenvolvimento quanto na Vercel.
+
 ### Certificados
 
 Certificados nao pedem imagem manual no admin. A secao publica usa um visual padrao com icone e tema dark red.

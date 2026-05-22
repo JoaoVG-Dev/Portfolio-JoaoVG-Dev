@@ -100,6 +100,10 @@
   text-transform: uppercase;
 }
 
+.cms-field > label {
+  color: inherit;
+}
+
 .admin-login-form input,
 .cms-field input,
 .cms-field textarea,
@@ -533,6 +537,12 @@
   grid-column: 1 / -1;
 }
 
+.cms-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
 .cms-form-actions button,
 .cms-record-actions button {
   min-height: 40px;
@@ -693,6 +703,43 @@
 .cms-image-preview.is-empty span {
   color: var(--muted);
   font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cms-avatar-preview {
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 107, 91, 0.24);
+  border-radius: 50%;
+  color: var(--red-light);
+  background:
+    linear-gradient(145deg, rgba(139, 0, 0, 0.22), rgba(0, 0, 0, 0.24)),
+    rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 28px rgba(192, 57, 43, 0.12);
+}
+
+.cms-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.cms-avatar-preview.is-empty {
+  align-content: center;
+  gap: 0.65rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.cms-avatar-preview.is-empty span {
+  color: var(--muted);
+  font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;

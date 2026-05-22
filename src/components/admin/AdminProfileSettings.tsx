@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { RotateCcw, Save, Settings } from 'lucide-react';
+import { RotateCcw, Save, Settings, UserRound } from 'lucide-react';
 import {
   fetchAdminProfile,
   updateAdminProfile,
   type ProfileSettingsRecord,
 } from '../../lib/adminRepository';
+
+const defaultAvatarUrl = '/assets/images/DevJoaoG.png';
 
 const emptyProfile: ProfileSettingsRecord = {
   id: '',
@@ -17,6 +19,29 @@ const emptyProfile: ProfileSettingsRecord = {
   whatsapp_url: '',
   email: '',
 };
+
+function AvatarPreview({ name, src }: { name: string; src: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  if (!src || hasError) {
+    return (
+      <div className="cms-avatar-preview is-empty">
+        <UserRound size={34} />
+        <span>{src ? 'Não foi possível carregar esta imagem.' : 'Preview do avatar aparecerá aqui.'}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cms-avatar-preview">
+      <img src={src} alt={`Avatar de ${name || 'perfil'}`} onError={() => setHasError(true)} />
+    </div>
+  );
+}
 
 export function AdminProfileSettings() {
   const [profile, setProfile] = useState<ProfileSettingsRecord>(emptyProfile);
@@ -121,14 +146,29 @@ export function AdminProfileSettings() {
                 required
               />
             </label>
-            <label className="cms-field wide">
-              Avatar URL
+            <div className="cms-field wide">
+              <label htmlFor="profile-avatar">Imagem de avatar</label>
               <input
-                type="url"
+                id="profile-avatar"
+                type="text"
                 value={profile.avatar_url}
                 onChange={(event) => updateField('avatar_url', event.target.value)}
+                placeholder={defaultAvatarUrl}
               />
-            </label>
+              <span className="cms-field-hint">
+                Use uma URL externa ou um caminho local, exemplo: /assets/images/DevJoaoG.png.
+              </span>
+              <div className="cms-inline-actions">
+                <button
+                  className="cms-secondary-button"
+                  type="button"
+                  onClick={() => updateField('avatar_url', defaultAvatarUrl)}
+                >
+                  Usar imagem padrão
+                </button>
+              </div>
+              <AvatarPreview name={profile.name} src={profile.avatar_url} />
+            </div>
             <label className="cms-field wide">
               GitHub
               <input
@@ -166,7 +206,7 @@ export function AdminProfileSettings() {
             <div className="cms-form-actions">
               <button type="submit" disabled={isSaving}>
                 <Save size={18} />
-                {isSaving ? 'Salvando...' : 'Salvar perfil'}
+                {isSaving ? 'Salvando...' : 'Salvar alterações'}
               </button>
               <button
                 className="cms-secondary-button"

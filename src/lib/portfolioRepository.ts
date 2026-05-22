@@ -94,21 +94,27 @@ const splitBio = (bio: string | null) => {
     .filter(Boolean);
 };
 
+const filledValue = (value: string | null | undefined, fallback: string) => {
+  const trimmedValue = value?.trim();
+
+  return trimmedValue || fallback;
+};
+
 const mapProfile = (row: ProfileRow): Profile => ({
   id: row.id,
-  name: row.name ?? fallbackPortfolio.profile.name,
-  role: row.title ?? fallbackPortfolio.profile.role,
+  name: filledValue(row.name, fallbackPortfolio.profile.name),
+  role: filledValue(row.title, fallbackPortfolio.profile.role),
   headline: fallbackPortfolio.profile.headline,
   summary: fallbackPortfolio.profile.summary,
   bio: splitBio(row.bio),
-  email: row.email ?? fallbackPortfolio.profile.email,
+  email: filledValue(row.email, fallbackPortfolio.profile.email),
   location: fallbackPortfolio.profile.location,
-  whatsappUrl: row.whatsapp_url ?? fallbackPortfolio.profile.whatsappUrl,
-  githubUrl: row.github_url ?? fallbackPortfolio.profile.githubUrl,
-  linkedinUrl: row.linkedin_url ?? fallbackPortfolio.profile.linkedinUrl,
+  whatsappUrl: filledValue(row.whatsapp_url, fallbackPortfolio.profile.whatsappUrl),
+  githubUrl: filledValue(row.github_url, fallbackPortfolio.profile.githubUrl),
+  linkedinUrl: filledValue(row.linkedin_url, fallbackPortfolio.profile.linkedinUrl),
   instagramUrl: fallbackPortfolio.profile.instagramUrl,
   cvUrl: fallbackPortfolio.profile.cvUrl,
-  avatarUrl: row.avatar_url ?? fallbackPortfolio.profile.avatarUrl,
+  avatarUrl: filledValue(row.avatar_url, fallbackPortfolio.profile.avatarUrl),
   isPublished: row.active ?? true,
   updatedAt: row.updated_at ?? undefined,
 });
