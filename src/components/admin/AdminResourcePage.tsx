@@ -628,7 +628,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
             </span>
             {record.featured && <span className="cms-status is-featured">Destaque</span>}
             {certificateUrl && (
-              <a className="cms-inline-link" href={certificateUrl} target="_blank" rel="noreferrer">
+              <a className="cms-inline-link" href={certificateUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={14} />
                 Ver certificado
               </a>

@@ -15,8 +15,12 @@ export function AdminLoginPage({ authError, isLoading, onSignIn }: AdminLoginPag
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
-    await onSignIn({ email, password });
-    setIsSubmitting(false);
+
+    try {
+      await onSignIn({ email, password });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -64,4 +68,3 @@ export function AdminLoginPage({ authError, isLoading, onSignIn }: AdminLoginPag
     </main>
   );
 }
-

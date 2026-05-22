@@ -133,7 +133,7 @@ export function AdminApp() {
             <ShieldCheck size={34} />
             <h1>Acesso administrativo não liberado</h1>
             <p>Seu usuário ainda não possui permissão de administrador.</p>
-            <p>Promova o usuário em `public.profiles` com `role = 'admin'` para liberar o painel.</p>
+            <p>Confirme no Supabase se o perfil deste e-mail está ativo e marcado como administrador.</p>
           </div>
           {authError && <p className="admin-form-error">{authError}</p>}
           <button className="admin-danger-button" type="button" onClick={signOut}>
