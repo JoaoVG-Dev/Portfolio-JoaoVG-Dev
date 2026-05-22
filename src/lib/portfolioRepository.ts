@@ -63,7 +63,6 @@ type CertificateRow = {
   institution: string | null;
   category: string | null;
   certificate_url: string | null;
-  image_url: string | null;
   workload: string | null;
   completed_at: string | null;
   active: boolean | null;
@@ -83,6 +82,19 @@ type ExperienceRow = {
   display_order: number | null;
 };
 
+type SupabaseClient = NonNullable<typeof supabase>;
+
+const profileSelect =
+  'id, name, title, bio, avatar_url, github_url, linkedin_url, whatsapp_url, email, role, active, updated_at';
+const technologySelect = 'id, name, category, level, icon_url, active, display_order';
+const projectSelect =
+  'id, title, slug, short_description, description, cover_url, github_url, deploy_url, status, featured, active, display_order, started_at, completed_at';
+const projectWithTechnologiesSelect = `${projectSelect}, project_technologies(technology_id, technologies(${technologySelect}))`;
+const certificateSelect =
+  'id, title, institution, category, certificate_url, workload, completed_at, active, featured, display_order';
+const experienceSelect =
+  'id, role, company, start_date, end_date, current, description, active, display_order';
+
 const splitBio = (bio: string | null) => {
   if (!bio) {
     return fallbackPortfolio.profile.bio;
@@ -99,6 +111,65 @@ const filledValue = (value: string | null | undefined, fallback: string) => {
 
   return trimmedValue || fallback;
 };
+
+const safeErrorDetails = (error: unknown) => {
+  const value = error as {
+    code?: unknown;
+    details?: unknown;
+    hint?: unknown;
+    message?: unknown;
+    name?: unknown;
+  };
+
+  return {
+    code: typeof value.code === 'string' ? value.code : undefined,
+    details: typeof value.details === 'string' ? value.details : undefined,
+    hint: typeof value.hint === 'string' ? value.hint : undefined,
+    message:
+      typeof value.message === 'string'
+        ? value.message
+        : error instanceof Error
+          ? error.message
+          : String(error),
+    name: typeof value.name === 'string' ? value.name : undefined,
+  };
+};
+
+const warnInDevelopment = (message: string, error?: unknown) => {
+  if (!import.meta.env.DEV) {
+    return;
+  }
+
+  if (error) {
+    console.warn(message, safeErrorDetails(error));
+    return;
+  }
+
+  console.warn(message);
+};
+
+const comparePublicRows = <T extends { completed_at: string | null; display_order: number | null; featured?: boolean | null }>(
+  first: T,
+  second: T,
+) => {
+  const featuredDifference = Number(Boolean(second.featured)) - Number(Boolean(first.featured));
+
+  if (featuredDifference !== 0) {
+    return featuredDifference;
+  }
+
+  const orderDifference = (first.display_order ?? Number.MAX_SAFE_INTEGER) - (second.display_order ?? Number.MAX_SAFE_INTEGER);
+
+  if (orderDifference !== 0) {
+    return orderDifference;
+  }
+
+  return (second.completed_at ?? '').localeCompare(first.completed_at ?? '');
+};
+
+const orderRows = <T extends { completed_at: string | null; display_order: number | null; featured?: boolean | null }>(
+  rows: T[],
+) => [...rows].sort(comparePublicRows);
 
 const mapProfile = (row: ProfileRow): Profile => ({
   id: row.id,
@@ -180,56 +251,171 @@ const mapExperience = (row: ExperienceRow): Experience => ({
   isPublished: row.active ?? true,
 });
 
-export async function fetchPortfolioContent(): Promise<PortfolioContent> {
-  if (!supabase) {
-    return fallbackPortfolio;
-  }
-
+async function fetchProfile(client: SupabaseClient): Promise<Profile> {
   try {
-    const [profile, technologies, projects, certificates, experiences] = await Promise.all([
-      supabase.from('profiles').select('*').eq('active', true).limit(1).maybeSingle(),
-      supabase.from('technologies').select('*').eq('active', true).order('display_order'),
-      supabase
-        .from('projects')
-        .select('*, project_technologies(technology_id, technologies(*))')
-        .eq('active', true)
-        .order('display_order'),
-      supabase.from('certificates').select('*').eq('active', true).order('display_order'),
-      supabase.from('experiences').select('*').eq('active', true).order('display_order'),
-    ]);
-
-    const error =
-      profile.error ??
-      technologies.error ??
-      projects.error ??
-      certificates.error ??
-      experiences.error;
+    const { data, error } = await client
+      .from('profiles')
+      .select(profileSelect)
+      .eq('active', true)
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
       throw error;
     }
 
-    const mappedCertificates = ((certificates.data ?? []) as CertificateRow[])
-      .map(mapCertificate)
-      .sort((a, b) => {
-        const orderDifference = a.sortOrder - b.sortOrder;
-
-        if (orderDifference !== 0) {
-          return orderDifference;
-        }
-
-        return (b.completedAt ?? '').localeCompare(a.completedAt ?? '');
-      });
-
-    return {
-      profile: profile.data ? mapProfile(profile.data as ProfileRow) : fallbackPortfolio.profile,
-      technologies: ((technologies.data ?? []) as TechnologyRow[]).map(mapTechnology),
-      projects: ((projects.data ?? []) as ProjectRow[]).map(mapProject),
-      certificates: mappedCertificates,
-      experiences: ((experiences.data ?? []) as ExperienceRow[]).map(mapExperience),
-    };
+    return data ? mapProfile(data as ProfileRow) : fallbackPortfolio.profile;
   } catch (error) {
-    console.warn('Supabase content fetch failed. Falling back to local portfolio data.', error);
+    warnInDevelopment('Supabase retornou erro ao carregar profile publico; usando fallback local da secao.', error);
+    return fallbackPortfolio.profile;
+  }
+}
+
+async function fetchTechnologies(client: SupabaseClient): Promise<Technology[]> {
+  try {
+    const { data, error } = await client
+      .from('technologies')
+      .select(technologySelect)
+      .eq('active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return ((data ?? []) as TechnologyRow[]).map(mapTechnology);
+  } catch (error) {
+    warnInDevelopment('Supabase retornou erro ao carregar tecnologias publicas; usando fallback local da secao.', error);
+    return fallbackPortfolio.technologies;
+  }
+}
+
+const applyProjectOrdering = (query: ReturnType<SupabaseClient['from']>) =>
+  query
+    .select(projectWithTechnologiesSelect)
+    .eq('active', true)
+    .order('featured', { ascending: false })
+    .order('display_order', { ascending: true })
+    .order('completed_at', { ascending: false });
+
+const applyProjectFallbackOrdering = (query: ReturnType<SupabaseClient['from']>) =>
+  query
+    .select(projectSelect)
+    .eq('active', true)
+    .order('featured', { ascending: false })
+    .order('display_order', { ascending: true })
+    .order('completed_at', { ascending: false });
+
+async function fetchProjects(client: SupabaseClient): Promise<Project[]> {
+  try {
+    const { data, error } = await applyProjectOrdering(client.from('projects'));
+
+    if (error) {
+      throw error;
+    }
+
+    const rows = orderRows((data ?? []) as ProjectRow[]);
+
+    if (rows.length === 0 && fallbackPortfolio.projects.length > 0) {
+      warnInDevelopment('Supabase retornou projetos vazios; verifique seed/RLS.');
+      return fallbackPortfolio.projects;
+    }
+
+    return rows.map(mapProject);
+  } catch (error) {
+    warnInDevelopment(
+      'Supabase retornou erro ao carregar tecnologias dos projetos; tentando exibir projetos sem tecnologias.',
+      error,
+    );
+
+    try {
+      const { data, error: projectError } = await applyProjectFallbackOrdering(client.from('projects'));
+
+      if (projectError) {
+        throw projectError;
+      }
+
+      const rows = orderRows((data ?? []) as ProjectRow[]);
+
+      if (rows.length === 0 && fallbackPortfolio.projects.length > 0) {
+        warnInDevelopment('Supabase retornou projetos vazios; verifique seed/RLS.');
+        return fallbackPortfolio.projects;
+      }
+
+      return rows.map((row) => mapProject({ ...row, project_technologies: [] }));
+    } catch (projectError) {
+      warnInDevelopment('Supabase retornou erro ao carregar projetos publicos; usando fallback local da secao.', projectError);
+      return fallbackPortfolio.projects;
+    }
+  }
+}
+
+async function fetchCertificates(client: SupabaseClient): Promise<Certificate[]> {
+  try {
+    const { data, error } = await client
+      .from('certificates')
+      .select(certificateSelect)
+      .eq('active', true)
+      .order('featured', { ascending: false })
+      .order('display_order', { ascending: true })
+      .order('completed_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    const rows = orderRows((data ?? []) as CertificateRow[]);
+
+    if (rows.length === 0 && fallbackPortfolio.certificates.length > 0) {
+      warnInDevelopment('Supabase retornou certificados vazios; verifique seed/RLS.');
+      return fallbackPortfolio.certificates;
+    }
+
+    return rows.map(mapCertificate);
+  } catch (error) {
+    warnInDevelopment('Supabase retornou erro ao carregar certificados publicos; usando fallback local da secao.', error);
+    return fallbackPortfolio.certificates;
+  }
+}
+
+async function fetchExperiences(client: SupabaseClient): Promise<Experience[]> {
+  try {
+    const { data, error } = await client
+      .from('experiences')
+      .select(experienceSelect)
+      .eq('active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return ((data ?? []) as ExperienceRow[]).map(mapExperience);
+  } catch (error) {
+    warnInDevelopment('Supabase retornou erro ao carregar experiencias publicas; usando fallback local da secao.', error);
+    return fallbackPortfolio.experiences;
+  }
+}
+
+export async function fetchPortfolioContent(): Promise<PortfolioContent> {
+  if (!supabase) {
     return fallbackPortfolio;
   }
+
+  const client = supabase;
+  const [profile, technologies, projects, certificates, experiences] = await Promise.all([
+    fetchProfile(client),
+    fetchTechnologies(client),
+    fetchProjects(client),
+    fetchCertificates(client),
+    fetchExperiences(client),
+  ]);
+
+  return {
+    profile,
+    technologies,
+    projects,
+    certificates,
+    experiences,
+  };
 }

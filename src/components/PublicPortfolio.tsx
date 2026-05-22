@@ -23,9 +23,36 @@ function formatDate(value: string | null) {
   });
 }
 
+function compareFeaturedFirst<T extends { isFeatured: boolean; sortOrder: number }>(first: T, second: T) {
+  const featuredDifference = Number(second.isFeatured) - Number(first.isFeatured);
+
+  if (featuredDifference !== 0) {
+    return featuredDifference;
+  }
+
+  return first.sortOrder - second.sortOrder;
+}
+
+function compareCertificates(
+  first: { completedAt: string | null; isFeatured: boolean; sortOrder: number },
+  second: { completedAt: string | null; isFeatured: boolean; sortOrder: number },
+) {
+  const orderDifference = compareFeaturedFirst(first, second);
+
+  if (orderDifference !== 0) {
+    return orderDifference;
+  }
+
+  return (second.completedAt ?? '').localeCompare(first.completedAt ?? '');
+}
+
 function ProjectImage({ src, title }: { src: string; title: string }) {
   const [hasError, setHasError] = useState(false);
   const canShowImage = Boolean(src) && !hasError;
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
 
   if (!canShowImage) {
     return (
@@ -86,16 +113,15 @@ function ProfileAvatar({ name, src }: { name: string; src: string }) {
 export function PublicPortfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { content, isLoading } = usePortfolioContent();
-  const { profile, technologies, projects, certificates } = content;
-  const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
-  const publishedProjects = projects.filter((project) => project.isPublished);
-  const activeCertificates = certificates.filter((certificate) => certificate.isPublished);
-  const featuredCertificates = activeCertificates.filter((certificate) => certificate.isFeatured);
-  const visibleCertificates = featuredCertificates.length > 0 ? featuredCertificates : activeCertificates;
-
-  const closeMenu = () => setIsMenuOpen(false);
+  const projectAnimationCount = content?.projects.filter((project) => project.isPublished).length ?? 0;
+  const certificateAnimationCount =
+    content?.certificates.filter((certificate) => certificate.isPublished).length ?? 0;
 
   useEffect(() => {
+    if (!content) {
+      return undefined;
+    }
+
     const projectCards = document.querySelectorAll('.card-project, .certificate-card');
     const observer = new IntersectionObserver(
       (entries) => {
@@ -109,7 +135,28 @@ export function PublicPortfolio() {
     projectCards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [publishedProjects.length, visibleCertificates.length]);
+  }, [content, projectAnimationCount, certificateAnimationCount]);
+
+  if (!content) {
+    return (
+      <div className="portfolio-page portfolio-page-loading" aria-busy="true">
+        <div className="public-loading" role="status">
+          Carregando portfolio...
+        </div>
+      </div>
+    );
+  }
+
+  const { profile, technologies, projects, certificates } = content;
+  const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
+  const publishedProjects = [...projects]
+    .filter((project) => project.isPublished)
+    .sort(compareFeaturedFirst);
+  const visibleCertificates = [...certificates]
+    .filter((certificate) => certificate.isPublished)
+    .sort(compareCertificates);
+
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <div className="portfolio-page" aria-busy={isLoading}>

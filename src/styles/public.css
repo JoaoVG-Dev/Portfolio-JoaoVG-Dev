@@ -24,6 +24,19 @@
   cursor: progress;
 }
 
+.portfolio-page-loading {
+  display: grid;
+  place-items: center;
+  background: var(--black);
+}
+
+.public-loading {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
 .portfolio-page a:focus-visible,
 .portfolio-page button:focus-visible,
 .portfolio-page input:focus-visible,
