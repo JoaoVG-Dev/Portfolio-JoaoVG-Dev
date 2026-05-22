@@ -134,13 +134,18 @@ Apos login com o usuario admin, o painel gerencia:
 
 ### Projetos
 
-Projetos usam o campo `cover_url`, mas o admin nao pede URL livre. O formulario oferece uma lista de imagens locais mapeadas em `src/data/projectImages.ts`, servidas a partir de `public/assets/projects`.
+Projetos usam o campo `cover_url`, mas o admin nao pede URL livre. O formulario oferece uma lista de imagens locais servidas a partir de `public/assets/projects`.
 
 Para adicionar uma nova imagem de projeto:
 
-1. Coloque o arquivo em `public/assets/projects`.
-2. Adicione uma opcao em `src/data/projectImages.ts`.
-3. Selecione a imagem no formulario do projeto.
+1. Rode o projeto com `npm run dev`.
+2. Abra `/admin/projects` e clique em `Novo projeto` ou edite um projeto.
+3. No campo `Imagem local do projeto`, use `Adicionar nova imagem local`.
+4. O Vite dev server salva o arquivo em `public/assets/projects` e preenche o `cover_url` automaticamente.
+
+Esse upload local funciona no ambiente de desenvolvimento porque o Vite consegue escrever no workspace. Em deploy estatico, o navegador nao consegue gravar arquivos dentro do repositorio; nesse caso, adicione a imagem no projeto antes do build ou use um backend/storage dedicado.
+
+`src/data/projectImages.ts` continua existindo como lista inicial/fallback, mas em desenvolvimento o painel tambem lista automaticamente os arquivos encontrados em `public/assets/projects`.
 
 Novos projetos entram no final da lista automaticamente usando o maior `display_order` atual + 1.
 

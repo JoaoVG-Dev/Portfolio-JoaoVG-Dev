@@ -698,6 +698,49 @@
   text-transform: none;
 }
 
+.cms-upload-row {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px dashed rgba(255, 107, 91, 0.26);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  background: rgba(139, 0, 0, 0.1);
+}
+
+.cms-upload-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--red-light);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cms-upload-row input[type='file'] {
+  width: 100%;
+  min-height: auto;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.86rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cms-upload-row input[type='file']::file-selector-button {
+  min-height: 38px;
+  margin-right: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 0.85rem;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 700;
+}
+
 .cms-icon-preview {
   min-height: 54px;
   display: flex;

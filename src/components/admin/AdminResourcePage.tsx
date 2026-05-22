@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   Award,
   Check,
@@ -13,6 +13,7 @@ import {
   Save,
   Star,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
 import {
@@ -25,6 +26,8 @@ import {
   updateCmsRecord,
   type TechnologyOption,
 } from '../../lib/adminRepository';
+import { fetchProjectImages, uploadProjectImage } from '../../lib/projectImageRepository';
+import type { ProjectImageOption } from '../../data/projectImages';
 import type { CmsField, CmsRecord, CmsRecordValue, CmsResourceConfig } from '../../types/cms';
 
 type AdminResourcePageProps = {
@@ -83,6 +86,13 @@ function getNextDisplayOrder(records: CmsRecord[]) {
   }, 0);
 
   return maxOrder + 1;
+}
+
+function upsertProjectImageOption(options: ProjectImageOption[], option: ProjectImageOption) {
+  const map = new Map(options.map((item) => [item.value, item]));
+  map.set(option.value, option);
+
+  return Array.from(map.values());
 }
 
 function formatDate(value: CmsRecordValue | string[] | undefined) {
@@ -146,6 +156,8 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [technologyOptions, setTechnologyOptions] = useState<TechnologyOption[]>([]);
   const [selectedTechnologyIds, setSelectedTechnologyIds] = useState<string[]>([]);
+  const [projectImages, setProjectImages] = useState<ProjectImageOption[]>([]);
+  const [isUploadingProjectImage, setIsUploadingProjectImage] = useState(false);
 
   const isProjectResource = config.key === 'projects';
   const isCertificateResource = config.key === 'certificates';
@@ -205,13 +217,15 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     setErrorMessage(null);
 
     try {
-      const [nextRecords, technologies] = await Promise.all([
+      const [nextRecords, technologies, images] = await Promise.all([
         fetchCmsRecords(config),
         isProjectResource ? fetchTechnologyOptions() : Promise.resolve([]),
+        isProjectResource ? fetchProjectImages() : Promise.resolve([]),
       ]);
 
       setRecords(nextRecords);
       setTechnologyOptions(technologies);
+      setProjectImages(images);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível carregar dados.');
     } finally {
@@ -369,6 +383,33 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     );
   }
 
+  async function handleProjectImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    setIsUploadingProjectImage(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+
+    try {
+      const uploadedImage = await uploadProjectImage(file);
+      setProjectImages((current) => upsertProjectImageOption(current, uploadedImage));
+      setFormRecord((current) => ({
+        ...current,
+        cover_url: uploadedImage.value,
+      }));
+      setStatusMessage(`Imagem "${uploadedImage.label}" adicionada em public/assets/projects.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
+    } finally {
+      setIsUploadingProjectImage(false);
+    }
+  }
+
   function renderField(field: CmsField) {
     const value = formRecord[field.name];
     const fieldId = `${config.key}-${field.name}`;
@@ -399,6 +440,8 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     }
 
     if (field.name === 'cover_url') {
+      const imageOptions = projectImages.length > 0 ? projectImages : (field.options ?? []);
+
       return (
         <>
           <select
@@ -406,12 +449,24 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
             onChange={(event) => updateField(field, event.target.value)}
             required={field.required}
           >
-            {(field.options ?? []).map((option) => (
+            {imageOptions.map((option) => (
               <option key={option.value || 'empty'} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
+          <div className="cms-upload-row">
+            <span className="cms-upload-copy">
+              <Upload size={17} />
+              {isUploadingProjectImage ? 'Enviando imagem...' : 'Adicionar nova imagem local'}
+            </span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              disabled={isUploadingProjectImage}
+              onChange={handleProjectImageUpload}
+            />
+          </div>
           <ImagePreview
             src={String(value ?? '')}
             alt="Preview da imagem local do projeto"
