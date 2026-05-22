@@ -1,3 +1,4 @@
+import { projectImageOptions } from '../data/projectImages';
 import type { CmsResourceConfig } from '../types/cms';
 
 export const cmsResourceConfigs: CmsResourceConfig[] = [
@@ -27,7 +28,13 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
       { name: 'slug', label: 'Slug', type: 'text', required: true, placeholder: 'kitenis' },
       { name: 'short_description', label: 'Chamada curta', type: 'text', placeholder: 'E-commerce' },
       { name: 'description', label: 'Descrição', type: 'textarea', placeholder: 'Resumo do problema, solução e resultado do projeto.' },
-      { name: 'cover_url', label: 'Imagem de capa do projeto', type: 'url', placeholder: 'https://exemplo.com/imagem-projeto.png' },
+      {
+        name: 'cover_url',
+        label: 'Imagem local do projeto',
+        type: 'select',
+        options: projectImageOptions,
+        hint: 'Escolha uma imagem já existente em public/assets/projects.',
+      },
       { name: 'github_url', label: 'GitHub', type: 'url', placeholder: 'https://github.com/usuario/repositorio' },
       { name: 'deploy_url', label: 'Deploy', type: 'url', placeholder: 'https://projeto.vercel.app' },
       { name: 'status', label: 'Status', type: 'text', placeholder: 'finalizado' },
@@ -58,7 +65,13 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
       { name: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'React' },
       { name: 'category', label: 'Categoria', type: 'text', placeholder: 'front-end' },
       { name: 'level', label: 'Nível', type: 'text', placeholder: 'intermediate' },
-      { name: 'icon_url', label: 'Ícone', type: 'url', placeholder: 'https://cdn.jsdelivr.net/...' },
+      {
+        name: 'icon_url',
+        label: 'Ícone da tecnologia',
+        type: 'url',
+        placeholder: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
+        hint: 'Use uma URL SVG/PNG servida pelo app ou por uma CDN confiável. Se ficar vazio, o site usa um ícone padrão.',
+      },
       { name: 'active', label: 'Exibir no site', type: 'checkbox' },
       { name: 'display_order', label: 'Ordem', type: 'number' },
     ],
@@ -76,10 +89,10 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
       institution: '',
       category: '',
       certificate_url: '',
-      image_url: '',
       workload: '',
       completed_at: '',
       active: true,
+      featured: false,
       display_order: 0,
     },
     fields: [
@@ -87,10 +100,10 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
       { name: 'institution', label: 'Instituição', type: 'text', placeholder: 'Alura' },
       { name: 'category', label: 'Categoria', type: 'text', placeholder: 'Front-end' },
       { name: 'certificate_url', label: 'Link do certificado', type: 'url', placeholder: 'https://exemplo.com/certificado' },
-      { name: 'image_url', label: 'Imagem do certificado', type: 'url', placeholder: 'https://exemplo.com/certificado.png' },
       { name: 'workload', label: 'Carga horária', type: 'text', placeholder: '32h' },
       { name: 'completed_at', label: 'Conclusão', type: 'date' },
       { name: 'active', label: 'Ativo', type: 'checkbox' },
+      { name: 'featured', label: 'Destacar certificado', type: 'checkbox' },
       { name: 'display_order', label: 'Ordem', type: 'number' },
     ],
     getTitle: (record) => String(record.title ?? 'Certificado sem título'),

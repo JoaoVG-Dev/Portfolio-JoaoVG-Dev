@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
+  Award,
   Check,
+  Code2,
   ExternalLink,
   Eye,
   EyeOff,
@@ -114,6 +116,25 @@ function ImagePreview({ alt, src }: { alt: string; src: string }) {
   );
 }
 
+function IconPreview({ name, src }: { name: string; src: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  return (
+    <div className="cms-icon-preview">
+      {src && !hasError ? (
+        <img src={src} alt={name} onError={() => setHasError(true)} />
+      ) : (
+        <Code2 size={20} />
+      )}
+      <span>{src && hasError ? 'Não foi possível carregar o ícone.' : 'Preview do ícone'}</span>
+    </div>
+  );
+}
+
 export function AdminResourcePage({ config }: AdminResourcePageProps) {
   const [records, setRecords] = useState<CmsRecord[]>([]);
   const [formRecord, setFormRecord] = useState<CmsRecord>(() => cloneRecord(config.initialRecord));
@@ -128,6 +149,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
   const isProjectResource = config.key === 'projects';
   const isCertificateResource = config.key === 'certificates';
+  const isTechnologyResource = config.key === 'technologies';
 
   const formTitle = useMemo(
     () => (editingId ? `Editar ${config.singular}` : `Novo ${config.singular}`),
@@ -165,12 +187,12 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
           ),
         },
         {
-          title: 'Imagem e credencial',
-          fields: fields.filter((field) => ['image_url', 'certificate_url'].includes(field.name)),
+          title: 'Credencial',
+          fields: fields.filter((field) => ['certificate_url'].includes(field.name)),
         },
         {
           title: 'Publicação',
-          fields: fields.filter((field) => ['active'].includes(field.name)),
+          fields: fields.filter((field) => ['active', 'featured'].includes(field.name)),
         },
       ];
     }
@@ -300,7 +322,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
   }
 
   async function handleToggleFeatured(record: CmsRecord) {
-    if (!isProjectResource || !record.id) {
+    if ((!isProjectResource && !isCertificateResource) || !record.id) {
       return;
     }
 
@@ -309,9 +331,8 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
       await updateCmsRecord(config, String(record.id), {
         featured: !Boolean(record.featured),
       });
-      setStatusMessage(
-        Boolean(record.featured) ? 'Projeto removido dos destaques.' : 'Projeto marcado como destaque.',
-      );
+      const label = isCertificateResource ? 'Certificado' : 'Projeto';
+      setStatusMessage(Boolean(record.featured) ? `${label} removido dos destaques.` : `${label} destacado.`);
       await refreshRecords();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível atualizar destaque.');
@@ -377,6 +398,28 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
       );
     }
 
+    if (field.name === 'cover_url') {
+      return (
+        <>
+          <select
+            value={String(value ?? '')}
+            onChange={(event) => updateField(field, event.target.value)}
+            required={field.required}
+          >
+            {(field.options ?? []).map((option) => (
+              <option key={option.value || 'empty'} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <ImagePreview
+            src={String(value ?? '')}
+            alt="Preview da imagem local do projeto"
+          />
+        </>
+      );
+    }
+
     if (field.type === 'select') {
       return (
         <select
@@ -414,6 +457,15 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
             src={String(value ?? '')}
             alt={field.name === 'cover_url' ? 'Preview da imagem de capa do projeto' : 'Preview do certificado'}
           />
+        </>
+      );
+    }
+
+    if (field.name === 'icon_url') {
+      return (
+        <>
+          {input}
+          <IconPreview src={String(value ?? '')} name={String(formRecord.name ?? 'Tecnologia')} />
         </>
       );
     }
@@ -459,16 +511,18 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
   }
 
   function renderRecordMedia(record: CmsRecord) {
-    const src = getStringValue(record, isProjectResource ? 'cover_url' : 'image_url');
-
-    if (!isProjectResource && !isCertificateResource) {
+    if (!isProjectResource && !isCertificateResource && !isTechnologyResource) {
       return null;
     }
 
+    const src = getStringValue(record, isProjectResource ? 'cover_url' : 'icon_url');
+
     return (
-      <div className="cms-record-media">
-        <ImageIcon size={20} />
-        {src && (
+      <div className={`cms-record-media${isTechnologyResource ? ' is-icon' : ''}`}>
+        {isCertificateResource && <Award size={20} />}
+        {isTechnologyResource && !src && <Code2 size={20} />}
+        {isProjectResource && !src && <ImageIcon size={20} />}
+        {src && !isCertificateResource && (
           <img
             src={src}
             alt={config.getTitle(record)}
@@ -517,6 +571,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
             <span className={record.active ? 'cms-status is-active' : 'cms-status'}>
               {record.active ? 'Ativo' : 'Inativo'}
             </span>
+            {record.featured && <span className="cms-status is-featured">Destaque</span>}
             {certificateUrl && (
               <a className="cms-inline-link" href={certificateUrl} target="_blank" rel="noreferrer">
                 <ExternalLink size={14} />
@@ -573,11 +628,16 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
                 <div className="cms-form-grid">
                   {group.fields.map((field) => (
                     <label
-                      className={field.type === 'textarea' || field.type === 'url' ? 'cms-field wide' : 'cms-field'}
+                      className={
+                        field.type === 'textarea' || field.type === 'url' || field.name === 'cover_url'
+                          ? 'cms-field wide'
+                          : 'cms-field'
+                      }
                       key={field.name}
                     >
                       {field.label}
                       {renderField(field)}
+                      {field.hint && <span className="cms-field-hint">{field.hint}</span>}
                     </label>
                   ))}
                 </div>
@@ -631,7 +691,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
                     <Pencil size={17} />
                     Editar
                   </button>
-                  {isProjectResource && (
+                  {(isProjectResource || isCertificateResource) && (
                     <button type="button" onClick={() => handleToggleFeatured(record)}>
                       <Star size={17} />
                       {record.featured ? 'Remover destaque' : 'Destacar'}

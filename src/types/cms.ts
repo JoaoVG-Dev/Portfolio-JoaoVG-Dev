@@ -13,6 +13,7 @@ export type CmsField = {
   type: CmsFieldType;
   required?: boolean;
   placeholder?: string;
+  hint?: string;
   options?: CmsFieldOption[];
 };
 
