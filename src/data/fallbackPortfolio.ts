@@ -219,6 +219,7 @@ export const fallbackPortfolio: PortfolioContent = {
       workload: null,
       completedAt: null,
       sortOrder: 10,
+      isFeatured: true,
       isPublished: true,
     },
   ],

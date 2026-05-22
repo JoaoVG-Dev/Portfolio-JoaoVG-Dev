@@ -67,6 +67,7 @@ type CertificateRow = {
   workload: string | null;
   completed_at: string | null;
   active: boolean | null;
+  featured?: boolean | null;
   display_order: number | null;
 };
 
@@ -152,10 +153,11 @@ const mapCertificate = (row: CertificateRow): Certificate => ({
   institution: row.institution ?? '',
   category: row.category,
   certificateUrl: row.certificate_url,
-  imageUrl: row.image_url,
+  imageUrl: null,
   workload: row.workload,
   completedAt: row.completed_at,
   sortOrder: row.display_order ?? 0,
+  isFeatured: row.featured ?? false,
   isPublished: row.active ?? true,
 });
 
@@ -201,24 +203,24 @@ export async function fetchPortfolioContent(): Promise<PortfolioContent> {
       throw error;
     }
 
+    const mappedCertificates = ((certificates.data ?? []) as CertificateRow[])
+      .map(mapCertificate)
+      .sort((a, b) => {
+        const orderDifference = a.sortOrder - b.sortOrder;
+
+        if (orderDifference !== 0) {
+          return orderDifference;
+        }
+
+        return (b.completedAt ?? '').localeCompare(a.completedAt ?? '');
+      });
+
     return {
       profile: profile.data ? mapProfile(profile.data as ProfileRow) : fallbackPortfolio.profile,
-      technologies:
-        technologies.data && technologies.data.length > 0
-          ? (technologies.data as TechnologyRow[]).map(mapTechnology)
-          : fallbackPortfolio.technologies,
-      projects:
-        projects.data && projects.data.length > 0
-          ? (projects.data as ProjectRow[]).map(mapProject)
-          : fallbackPortfolio.projects,
-      certificates:
-        certificates.data && certificates.data.length > 0
-          ? (certificates.data as CertificateRow[]).map(mapCertificate)
-          : fallbackPortfolio.certificates,
-      experiences:
-        experiences.data && experiences.data.length > 0
-          ? (experiences.data as ExperienceRow[]).map(mapExperience)
-          : fallbackPortfolio.experiences,
+      technologies: ((technologies.data ?? []) as TechnologyRow[]).map(mapTechnology),
+      projects: ((projects.data ?? []) as ProjectRow[]).map(mapProject),
+      certificates: mappedCertificates,
+      experiences: ((experiences.data ?? []) as ExperienceRow[]).map(mapExperience),
     };
   } catch (error) {
     console.warn('Supabase content fetch failed. Falling back to local portfolio data.', error);

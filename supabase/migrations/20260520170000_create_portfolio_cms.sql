@@ -72,6 +72,7 @@ create table public.certificates (
   image_url text,
   workload text,
   completed_at date,
+  featured boolean default false,
   active boolean default true,
   display_order integer default 0,
   created_at timestamptz default now(),

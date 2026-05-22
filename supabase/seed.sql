@@ -2,6 +2,9 @@
 -- Crie primeiro o usuario admin em Supabase Auth com o e-mail abaixo.
 -- Se o usuario ainda nao existir, o profile sera ignorado sem quebrar o seed.
 
+alter table public.certificates
+add column if not exists featured boolean default false;
+
 with admin_user as (
   select id
   from auth.users
@@ -54,6 +57,7 @@ insert into public.technologies (
   level,
   icon_url,
   active,
+  featured,
   display_order
 ) values
   ('10000000-0000-4000-8000-000000000001', 'HTML5', 'front-end', 'intermediate', 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg', true, 10),
@@ -218,6 +222,7 @@ insert into public.certificates (
   'Graduação tecnológica',
   null,
   true,
+  true,
   10
 )
 on conflict (id) do update set
@@ -229,6 +234,7 @@ on conflict (id) do update set
   workload = excluded.workload,
   completed_at = excluded.completed_at,
   active = excluded.active,
+  featured = excluded.featured,
   display_order = excluded.display_order;
 
 insert into public.experiences (

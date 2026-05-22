@@ -51,6 +51,7 @@ export type Certificate = {
   workload: string | null;
   completedAt: string | null;
   sortOrder: number;
+  isFeatured: boolean;
   isPublished: boolean;
 };
 
