@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Award, ExternalLink, ImageIcon } from 'lucide-react';
+import { Award, Code2, ExternalLink, ImageIcon } from 'lucide-react';
 import { usePortfolioContent } from '../hooks/usePortfolioContent';
 import '../styles/public.css';
 
@@ -39,18 +39,30 @@ function ProjectImage({ src, title }: { src: string; title: string }) {
   return <img src={src} alt={title} onError={() => setHasError(true)} />;
 }
 
-function CertificateImage({ src, title }: { src: string | null; title: string }) {
+function TechnologyIcon({ src, name }: { src: string; name: string }) {
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
 
   if (!src || hasError) {
     return (
-      <div className="certificate-media-fallback">
-        <Award size={30} />
-      </div>
+      <span className="tech-icon-fallback" aria-label={name}>
+        <Code2 size={22} />
+      </span>
     );
   }
 
-  return <img src={src} alt={title} onError={() => setHasError(true)} />;
+  return <img src={src} alt={name} width={24} height={24} onError={() => setHasError(true)} />;
+}
+
+function CertificateImage() {
+  return (
+    <div className="certificate-media-fallback">
+      <Award size={30} />
+    </div>
+  );
 }
 
 export function PublicPortfolio() {
@@ -59,7 +71,9 @@ export function PublicPortfolio() {
   const { profile, technologies, projects, certificates } = content;
   const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
   const publishedProjects = projects.filter((project) => project.isPublished);
-  const publishedCertificates = certificates.filter((certificate) => certificate.isPublished);
+  const activeCertificates = certificates.filter((certificate) => certificate.isPublished);
+  const featuredCertificates = activeCertificates.filter((certificate) => certificate.isFeatured);
+  const visibleCertificates = featuredCertificates.length > 0 ? featuredCertificates : activeCertificates;
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -77,7 +91,7 @@ export function PublicPortfolio() {
     projectCards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [publishedProjects.length, publishedCertificates.length]);
+  }, [publishedProjects.length, visibleCertificates.length]);
 
   return (
     <div className="portfolio-page" aria-busy={isLoading}>
@@ -153,7 +167,7 @@ export function PublicPortfolio() {
             {featuredTechnologies.slice(0, 9).map((skill) => (
               <div className="carousel-card" key={skill.id}>
                 <p className="carousel-card-image">
-                  <img src={skill.iconUrl} alt={skill.name} width={24} height={24} />
+                  <TechnologyIcon src={skill.iconUrl} name={skill.name} />
                 </p>
               </div>
             ))}
@@ -220,13 +234,17 @@ export function PublicPortfolio() {
             </header>
 
             <div className="certificates-grid">
-              {publishedCertificates.map((certificate) => {
+              {visibleCertificates.length === 0 && (
+                <p className="certificates-empty">Certificações em atualização.</p>
+              )}
+
+              {visibleCertificates.map((certificate) => {
                 const completedAt = formatDate(certificate.completedAt);
 
                 return (
                   <article className="certificate-card" key={certificate.id}>
                     <div className="certificate-media">
-                      <CertificateImage src={certificate.imageUrl} title={certificate.title} />
+                      <CertificateImage />
                     </div>
                     <div className="certificate-content">
                       <div>
