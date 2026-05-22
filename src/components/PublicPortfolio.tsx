@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Award, Code2, ExternalLink, ImageIcon } from 'lucide-react';
+import { Award, Code2, ExternalLink, ImageIcon, UserRound } from 'lucide-react';
 import { usePortfolioContent } from '../hooks/usePortfolioContent';
 import '../styles/public.css';
 
@@ -63,6 +63,24 @@ function CertificateImage() {
       <Award size={30} />
     </div>
   );
+}
+
+function ProfileAvatar({ name, src }: { name: string; src: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  if (!src || hasError) {
+    return (
+      <div className="about-avatar-fallback" aria-label={`Avatar indisponível para ${name}`}>
+        <UserRound size={34} />
+      </div>
+    );
+  }
+
+  return <img src={src} alt={`Avatar de ${name}`} onError={() => setHasError(true)} />;
 }
 
 export function PublicPortfolio() {
@@ -153,10 +171,10 @@ export function PublicPortfolio() {
             <a className="home-button home-button-primary" href={profile.cvUrl} download>
               Baixar CV
             </a>
-            <a className="home-button home-button-secondary" href={profile.githubUrl} target="_blank" rel="noreferrer">
+            <a className="home-button home-button-secondary" href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
-            <a className="home-button home-button-secondary" href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+            <a className="home-button home-button-secondary" href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
               LinkedIn
             </a>
           </div>
@@ -176,7 +194,7 @@ export function PublicPortfolio() {
 
         <section id="about" className="about-me">
           <div className="img">
-            <img src={profile.avatarUrl} alt="DevJoaoG Animado" />
+            <ProfileAvatar name={profile.name} src={profile.avatarUrl} />
           </div>
           <div>
             <h1>About me</h1>
@@ -215,7 +233,7 @@ export function PublicPortfolio() {
                       className="project-button"
                       href={projectHref}
                       target={isExternal ? '_blank' : undefined}
-                      rel={isExternal ? 'noreferrer' : undefined}
+                      rel={isExternal ? 'noopener noreferrer' : undefined}
                     >
                       View project
                     </a>
@@ -263,7 +281,7 @@ export function PublicPortfolio() {
                           className="certificate-link"
                           href={certificate.certificateUrl}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                         >
                           Ver certificado
                           <ExternalLink size={15} />
@@ -330,17 +348,17 @@ export function PublicPortfolio() {
                   <h3>Social</h3>
                   <ul className="contact-links">
                     <li>
-                      <a href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+                      <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
                         LinkedIn
                       </a>
                     </li>
                     <li>
-                      <a href={profile.githubUrl} target="_blank" rel="noreferrer">
+                      <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
                         GitHub
                       </a>
                     </li>
                     <li>
-                      <a href={profile.instagramUrl} target="_blank" rel="noreferrer">
+                      <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer">
                         Instagram
                       </a>
                     </li>
@@ -380,17 +398,17 @@ export function PublicPortfolio() {
                 </a>
               </li>
               <li>
-                <a href={profile.linkedinUrl} target="_blank" rel="noreferrer">
+                <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
                   LinkedIn
                 </a>
               </li>
               <li>
-                <a href={profile.githubUrl} target="_blank" rel="noreferrer">
+                <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
                   GitHub
                 </a>
               </li>
               <li>
-                <a href={profile.whatsappUrl} target="_blank" rel="noreferrer">
+                <a href={profile.whatsappUrl} target="_blank" rel="noopener noreferrer">
                   WhatsApp
                 </a>
               </li>
