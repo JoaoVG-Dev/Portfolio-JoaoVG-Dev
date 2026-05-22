@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { RotateCcw, Save, Settings, UserRound } from 'lucide-react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { ImagePlus, RotateCcw, Save, Settings, Trash2, UserRound } from 'lucide-react';
 import {
   fetchAdminProfile,
   updateAdminProfile,
@@ -7,6 +7,12 @@ import {
 } from '../../lib/adminRepository';
 
 const defaultAvatarUrl = '/assets/images/DevJoaoG.png';
+const maxAvatarFileSize = 2 * 1024 * 1024;
+const supportedAvatarTypes = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
+const windowsDrivePathPattern = /^[a-z]:[\\/]/i;
+const downloadsPathPattern = /^(?:downloads(?:[\\/]|$)|.*[\\/]downloads(?:[\\/]|$))/i;
+const invalidAvatarPathMessage =
+  'Use uma URL pública, um caminho público do projeto ou escolha uma imagem do computador.';
 
 const emptyProfile: ProfileSettingsRecord = {
   id: '',
@@ -50,6 +56,8 @@ export function AdminProfileSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   async function loadProfile() {
     setIsLoading(true);
@@ -65,6 +73,7 @@ export function AdminProfileSettings() {
 
       setProfile(nextProfile);
       setInitialProfile(nextProfile);
+      setAvatarError(validateAvatarUrl(nextProfile.avatar_url));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível carregar o perfil.');
     } finally {
@@ -83,11 +92,84 @@ export function AdminProfileSettings() {
     }));
   }
 
+  function validateAvatarUrl(value: string) {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return null;
+    }
+
+    const isPublicUrl = /^https?:\/\//i.test(trimmedValue);
+    const isProjectPublicPath = trimmedValue.startsWith('/');
+    const isInvalidLocalPath =
+      trimmedValue.toLowerCase().startsWith('file://') ||
+      windowsDrivePathPattern.test(trimmedValue) ||
+      (!isPublicUrl && !isProjectPublicPath && downloadsPathPattern.test(trimmedValue));
+
+    return isInvalidLocalPath ? invalidAvatarPathMessage : null;
+  }
+
+  function updateAvatarUrl(value: string) {
+    updateField('avatar_url', value);
+    setStatusMessage(null);
+    setAvatarError(validateAvatarUrl(value));
+  }
+
+  function handleAvatarFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    setStatusMessage(null);
+
+    if (!file) {
+      return;
+    }
+
+    if (!supportedAvatarTypes.has(file.type)) {
+      setAvatarError('Selecione apenas arquivos de imagem.');
+      return;
+    }
+
+    if (file.size > maxAvatarFileSize) {
+      setAvatarError('A imagem é muito grande. Use uma imagem de até 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        updateField('avatar_url', reader.result);
+        setAvatarError(null);
+        setErrorMessage(null);
+        return;
+      }
+
+      setAvatarError('Não foi possível carregar esta imagem.');
+    };
+    reader.onerror = () => setAvatarError('Não foi possível carregar esta imagem.');
+    reader.readAsDataURL(file);
+  }
+
+  function handleCancel() {
+    setProfile(initialProfile);
+    setAvatarError(validateAvatarUrl(initialProfile.avatar_url));
+    setStatusMessage(null);
+    setErrorMessage(null);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextAvatarError = validateAvatarUrl(profile.avatar_url);
+
+    if (nextAvatarError) {
+      setAvatarError(nextAvatarError);
+      setErrorMessage(nextAvatarError);
+      return;
+    }
+
     setIsSaving(true);
     setStatusMessage(null);
     setErrorMessage(null);
+    setAvatarError(null);
 
     try {
       const { id: _id, ...payload } = profile;
@@ -148,26 +230,49 @@ export function AdminProfileSettings() {
             </label>
             <div className="cms-field wide">
               <label htmlFor="profile-avatar">Imagem de avatar</label>
-              <input
-                id="profile-avatar"
-                type="text"
-                value={profile.avatar_url}
-                onChange={(event) => updateField('avatar_url', event.target.value)}
-                placeholder={defaultAvatarUrl}
-              />
-              <span className="cms-field-hint">
-                Use uma URL externa ou um caminho local, exemplo: /assets/images/DevJoaoG.png.
-              </span>
-              <div className="cms-inline-actions">
-                <button
-                  className="cms-secondary-button"
-                  type="button"
-                  onClick={() => updateField('avatar_url', defaultAvatarUrl)}
-                >
-                  Usar imagem padrão
-                </button>
+              <div className="cms-avatar-editor">
+                <AvatarPreview name={profile.name} src={profile.avatar_url} />
+                <div className="cms-avatar-controls">
+                  <input
+                    id="profile-avatar"
+                    type="text"
+                    value={profile.avatar_url}
+                    onChange={(event) => updateAvatarUrl(event.target.value)}
+                    placeholder={defaultAvatarUrl}
+                    aria-describedby="profile-avatar-help"
+                    aria-invalid={Boolean(avatarError)}
+                  />
+                  <span className="cms-field-hint" id="profile-avatar-help">
+                    Escolha uma imagem do seu computador ou informe uma URL/caminho público.
+                  </span>
+                  {avatarError && <span className="cms-field-error">{avatarError}</span>}
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleAvatarFileChange}
+                  />
+                  <div className="cms-inline-actions">
+                    <button
+                      className="cms-secondary-button"
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      <ImagePlus size={17} />
+                      Escolher foto
+                    </button>
+                    <button
+                      className="cms-secondary-button"
+                      type="button"
+                      onClick={() => updateAvatarUrl('')}
+                    >
+                      <Trash2 size={17} />
+                      Limpar foto
+                    </button>
+                  </div>
+                </div>
               </div>
-              <AvatarPreview name={profile.name} src={profile.avatar_url} />
             </div>
             <label className="cms-field wide">
               GitHub
@@ -211,7 +316,7 @@ export function AdminProfileSettings() {
               <button
                 className="cms-secondary-button"
                 type="button"
-                onClick={() => setProfile(initialProfile)}
+                onClick={handleCancel}
               >
                 <RotateCcw size={18} />
                 Cancelar
