@@ -525,6 +525,27 @@
   text-transform: none;
 }
 
+.cms-field-error {
+  margin: 0;
+  color: #ffd1cc;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cms-avatar-editor {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+}
+
+.cms-avatar-controls {
+  min-width: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
 .cms-form-actions,
 .cms-record-actions {
   display: flex;
@@ -883,6 +904,14 @@
 @media (min-width: 760px) {
   .admin-page-heading.split {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .cms-avatar-editor {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  .cms-avatar-preview {
+    width: 180px;
   }
 
   .cms-form-grid {
