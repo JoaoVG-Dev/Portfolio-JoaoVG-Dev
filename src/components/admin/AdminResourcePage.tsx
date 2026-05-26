@@ -27,6 +27,7 @@ import {
   type TechnologyOption,
 } from '../../lib/adminRepository';
 import { fetchProjectImages, uploadProjectImage } from '../../lib/projectImageRepository';
+import { isSafeExternalUrl, isSafeImageSrc, toSafeExternalUrl, toSafeImageSrc } from '../../lib/urlSafety';
 import type { ProjectImageOption } from '../../data/projectImages';
 import type { CmsField, CmsRecord, CmsRecordValue, CmsResourceConfig } from '../../types/cms';
 
@@ -69,6 +70,24 @@ function buildPayload(config: CmsResourceConfig, formRecord: CmsRecord): CmsReco
   }, {});
 }
 
+function validatePayload(config: CmsResourceConfig, payload: CmsRecord) {
+  for (const field of config.fields) {
+    const value = payload[field.name];
+
+    if (typeof value !== 'string' || !value.trim()) {
+      continue;
+    }
+
+    if (field.type === 'url' && !isSafeExternalUrl(value)) {
+      throw new Error(`${field.label}: use uma URL pública iniciada por http:// ou https://.`);
+    }
+
+    if ((field.name === 'cover_url' || field.name === 'image_url') && !isSafeImageSrc(value)) {
+      throw new Error(`${field.label}: use uma imagem pública válida do projeto.`);
+    }
+  }
+}
+
 function getStringValue(record: CmsRecord, key: string) {
   const value = record[key];
   return typeof value === 'string' ? value : '';
@@ -105,12 +124,13 @@ function formatDate(value: CmsRecordValue | string[] | undefined) {
 
 function ImagePreview({ alt, src }: { alt: string; src: string }) {
   const [hasError, setHasError] = useState(false);
+  const safeSrc = toSafeImageSrc(src);
 
   useEffect(() => {
     setHasError(false);
   }, [src]);
 
-  if (!src || hasError) {
+  if (!safeSrc || hasError) {
     return (
       <div className="cms-image-preview is-empty">
         <ImageIcon size={22} />
@@ -121,13 +141,14 @@ function ImagePreview({ alt, src }: { alt: string; src: string }) {
 
   return (
     <div className="cms-image-preview">
-      <img src={src} alt={alt} onError={() => setHasError(true)} />
+      <img src={safeSrc} alt={alt} loading="lazy" decoding="async" onError={() => setHasError(true)} />
     </div>
   );
 }
 
 function IconPreview({ name, src }: { name: string; src: string }) {
   const [hasError, setHasError] = useState(false);
+  const safeSrc = toSafeImageSrc(src);
 
   useEffect(() => {
     setHasError(false);
@@ -135,12 +156,18 @@ function IconPreview({ name, src }: { name: string; src: string }) {
 
   return (
     <div className="cms-icon-preview">
-      {src && !hasError ? (
-        <img src={src} alt={name} onError={() => setHasError(true)} />
+      {safeSrc && !hasError ? (
+        <img src={safeSrc} alt={name} loading="lazy" decoding="async" onError={() => setHasError(true)} />
       ) : (
         <Code2 size={20} />
       )}
-      <span>{src && hasError ? 'Não foi possível carregar o ícone.' : 'Preview do ícone'}</span>
+      <span>
+        {src && !safeSrc
+          ? 'URL de ícone inválida.'
+          : src && hasError
+            ? 'Não foi possível carregar o ícone.'
+            : 'Preview do ícone'}
+      </span>
     </div>
   );
 }
@@ -295,6 +322,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
     try {
       const payload = buildPayload(config, formRecord);
+      validatePayload(config, payload);
 
       if (!editingId && config.fields.some((field) => field.name === 'display_order')) {
         payload.display_order = getNextDisplayOrder(records);
@@ -570,7 +598,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
       return null;
     }
 
-    const src = getStringValue(record, isProjectResource ? 'cover_url' : 'icon_url');
+    const src = toSafeImageSrc(getStringValue(record, isProjectResource ? 'cover_url' : 'icon_url'));
 
     return (
       <div className={`cms-record-media${isTechnologyResource ? ' is-icon' : ''}`}>
@@ -592,7 +620,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
   function renderRecordMeta(record: CmsRecord) {
     const technologyNames = getStringArray(record, 'technology_names');
-    const certificateUrl = getStringValue(record, 'certificate_url');
+    const certificateUrl = toSafeExternalUrl(getStringValue(record, 'certificate_url'));
     const completedAt = formatDate(record.completed_at);
 
     return (

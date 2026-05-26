@@ -19,7 +19,6 @@ type ProfileRow = {
   linkedin_url: string | null;
   whatsapp_url: string | null;
   email: string | null;
-  role: string | null;
   active: boolean | null;
   updated_at: string | null;
 };
@@ -85,7 +84,7 @@ type ExperienceRow = {
 type SupabaseClient = NonNullable<typeof supabase>;
 
 const profileSelect =
-  'id, name, title, bio, avatar_url, github_url, linkedin_url, whatsapp_url, email, role, active, updated_at';
+  'id, name, title, bio, avatar_url, github_url, linkedin_url, whatsapp_url, email, active, updated_at';
 const technologySelect = 'id, name, category, level, icon_url, active, display_order';
 const projectSelect =
   'id, title, slug, short_description, description, cover_url, github_url, deploy_url, status, featured, active, display_order, started_at, completed_at';

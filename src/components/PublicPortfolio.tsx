@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Award, Code2, ExternalLink, ImageIcon, UserRound } from 'lucide-react';
 import { usePortfolioContent } from '../hooks/usePortfolioContent';
+import {
+  toSafeExternalUrl,
+  toSafeImageSrc,
+  toSafeMailtoHref,
+  toSafePublicPath,
+} from '../lib/urlSafety';
 import '../styles/public.css';
 
 const navItems = [
@@ -11,6 +17,7 @@ const navItems = [
   { label: 'Certifications', href: '#certifications' },
   { label: 'Contact', href: '#contact' },
 ];
+const fallbackCvUrl = '/assets/cv/Joao_Vitor_Guidoti_CV.pdf';
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -48,7 +55,8 @@ function compareCertificates(
 
 function ProjectImage({ src, title }: { src: string; title: string }) {
   const [hasError, setHasError] = useState(false);
-  const canShowImage = Boolean(src) && !hasError;
+  const safeSrc = toSafeImageSrc(src);
+  const canShowImage = Boolean(safeSrc) && !hasError;
 
   useEffect(() => {
     setHasError(false);
@@ -63,7 +71,7 @@ function ProjectImage({ src, title }: { src: string; title: string }) {
     );
   }
 
-  return <img src={src} alt={title} onError={() => setHasError(true)} />;
+  return <img src={safeSrc} alt={title} loading="lazy" decoding="async" onError={() => setHasError(true)} />;
 }
 
 function TechnologyIcon({ src, name }: { src: string; name: string }) {
@@ -73,7 +81,9 @@ function TechnologyIcon({ src, name }: { src: string; name: string }) {
     setHasError(false);
   }, [src]);
 
-  if (!src || hasError) {
+  const safeSrc = toSafeImageSrc(src);
+
+  if (!safeSrc || hasError) {
     return (
       <span className="tech-icon-fallback" aria-label={name}>
         <Code2 size={22} />
@@ -81,7 +91,17 @@ function TechnologyIcon({ src, name }: { src: string; name: string }) {
     );
   }
 
-  return <img src={src} alt={name} width={24} height={24} onError={() => setHasError(true)} />;
+  return (
+    <img
+      src={safeSrc}
+      alt={name}
+      width={24}
+      height={24}
+      loading="lazy"
+      decoding="async"
+      onError={() => setHasError(true)}
+    />
+  );
 }
 
 function CertificateImage() {
@@ -94,12 +114,13 @@ function CertificateImage() {
 
 function ProfileAvatar({ name, src }: { name: string; src: string }) {
   const [hasError, setHasError] = useState(false);
+  const safeSrc = toSafeImageSrc(src);
 
   useEffect(() => {
     setHasError(false);
   }, [src]);
 
-  if (!src || hasError) {
+  if (!safeSrc || hasError) {
     return (
       <div className="about-avatar-fallback" aria-label={`Avatar indisponível para ${name}`}>
         <UserRound size={34} />
@@ -107,7 +128,7 @@ function ProfileAvatar({ name, src }: { name: string; src: string }) {
     );
   }
 
-  return <img src={src} alt={`Avatar de ${name}`} onError={() => setHasError(true)} />;
+  return <img src={safeSrc} alt={`Avatar de ${name}`} loading="lazy" decoding="async" onError={() => setHasError(true)} />;
 }
 
 export function PublicPortfolio() {
@@ -155,6 +176,19 @@ export function PublicPortfolio() {
   const visibleCertificates = [...certificates]
     .filter((certificate) => certificate.active === true)
     .sort(compareCertificates);
+  const githubUrl = toSafeExternalUrl(profile.githubUrl) ?? '#contact';
+  const linkedinUrl = toSafeExternalUrl(profile.linkedinUrl) ?? '#contact';
+  const instagramUrl = toSafeExternalUrl(profile.instagramUrl) ?? '#contact';
+  const whatsappUrl = toSafeExternalUrl(profile.whatsappUrl) ?? '#contact';
+  const cvUrl = toSafePublicPath(profile.cvUrl) ?? fallbackCvUrl;
+  const emailHref = toSafeMailtoHref(profile.email) ?? '#contact';
+  const hireHref = emailHref.startsWith('mailto:')
+    ? `${emailHref}?subject=Let's%20work%20together`
+    : '#contact';
+  const githubIsExternal = githubUrl.startsWith('http');
+  const linkedinIsExternal = linkedinUrl.startsWith('http');
+  const instagramIsExternal = instagramUrl.startsWith('http');
+  const whatsappIsExternal = whatsappUrl.startsWith('http');
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -215,13 +249,23 @@ export function PublicPortfolio() {
               I'm a <strong>Software engineer </strong>
             </h1>
             <p>{profile.summary}</p>
-            <a className="home-button home-button-primary" href={profile.cvUrl} download>
+            <a className="home-button home-button-primary" href={cvUrl} download>
               Baixar CV
             </a>
-            <a className="home-button home-button-secondary" href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              className="home-button home-button-secondary"
+              href={githubUrl}
+              target={githubIsExternal ? '_blank' : undefined}
+              rel={githubIsExternal ? 'noopener noreferrer' : undefined}
+            >
               GitHub
             </a>
-            <a className="home-button home-button-secondary" href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              className="home-button home-button-secondary"
+              href={linkedinUrl}
+              target={linkedinIsExternal ? '_blank' : undefined}
+              rel={linkedinIsExternal ? 'noopener noreferrer' : undefined}
+            >
               LinkedIn
             </a>
           </div>
@@ -255,7 +299,8 @@ export function PublicPortfolio() {
           <h1>My Projects</h1>
           <div className="list-card-project">
             {publishedProjects.map((project) => {
-              const projectHref = project.liveUrl ?? project.repositoryUrl ?? '#contact';
+              const projectHref =
+                toSafeExternalUrl(project.liveUrl) ?? toSafeExternalUrl(project.repositoryUrl) ?? '#contact';
               const isExternal = projectHref.startsWith('http');
 
               return (
@@ -305,6 +350,7 @@ export function PublicPortfolio() {
 
               {visibleCertificates.map((certificate) => {
                 const completedAt = formatDate(certificate.completedAt);
+                const certificateHref = toSafeExternalUrl(certificate.certificateUrl);
 
                 return (
                   <article className="certificate-card" key={certificate.id}>
@@ -323,10 +369,10 @@ export function PublicPortfolio() {
                         {completedAt && <span>{completedAt}</span>}
                       </div>
 
-                      {certificate.certificateUrl && (
+                      {certificateHref && (
                         <a
                           className="certificate-link"
-                          href={certificate.certificateUrl}
+                          href={certificateHref}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -385,7 +431,7 @@ export function PublicPortfolio() {
                 <div className="contact-card">
                   <h3>Contact</h3>
                   <p>
-                    Prefer email? Reach me at <a href={`mailto:${profile.email}`}>{profile.email}</a>.
+                    Prefer email? Reach me at <a href={emailHref}>{profile.email}</a>.
                   </p>
                   <p>
                     Based in <span>Brazil</span> — open to remote opportunities.
@@ -395,17 +441,29 @@ export function PublicPortfolio() {
                   <h3>Social</h3>
                   <ul className="contact-links">
                     <li>
-                      <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={linkedinUrl}
+                        target={linkedinIsExternal ? '_blank' : undefined}
+                        rel={linkedinIsExternal ? 'noopener noreferrer' : undefined}
+                      >
                         LinkedIn
                       </a>
                     </li>
                     <li>
-                      <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={githubUrl}
+                        target={githubIsExternal ? '_blank' : undefined}
+                        rel={githubIsExternal ? 'noopener noreferrer' : undefined}
+                      >
                         GitHub
                       </a>
                     </li>
                     <li>
-                      <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={instagramUrl}
+                        target={instagramIsExternal ? '_blank' : undefined}
+                        rel={instagramIsExternal ? 'noopener noreferrer' : undefined}
+                      >
                         Instagram
                       </a>
                     </li>
@@ -440,28 +498,40 @@ export function PublicPortfolio() {
             <h2 className="footer-title">Let's talk</h2>
             <ul className="footer-links">
               <li>
-                <a href={`mailto:${profile.email}`} rel="noopener">
+                <a href={emailHref} rel="noopener">
                   {profile.email}
                 </a>
               </li>
               <li>
-                <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={linkedinUrl}
+                  target={linkedinIsExternal ? '_blank' : undefined}
+                  rel={linkedinIsExternal ? 'noopener noreferrer' : undefined}
+                >
                   LinkedIn
                 </a>
               </li>
               <li>
-                <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={githubUrl}
+                  target={githubIsExternal ? '_blank' : undefined}
+                  rel={githubIsExternal ? 'noopener noreferrer' : undefined}
+                >
                   GitHub
                 </a>
               </li>
               <li>
-                <a href={profile.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={whatsappUrl}
+                  target={whatsappIsExternal ? '_blank' : undefined}
+                  rel={whatsappIsExternal ? 'noopener noreferrer' : undefined}
+                >
                   WhatsApp
                 </a>
               </li>
             </ul>
             <div className="footer-cta">
-              <a className="footer-btn" href={`mailto:${profile.email}?subject=Let's%20work%20together`}>
+              <a className="footer-btn" href={hireHref}>
                 Hire me
               </a>
             </div>

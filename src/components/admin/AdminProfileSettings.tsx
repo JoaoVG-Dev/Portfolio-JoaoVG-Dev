@@ -5,14 +5,18 @@ import {
   updateAdminProfile,
   type ProfileSettingsRecord,
 } from '../../lib/adminRepository';
+import { isBlockedLocalPath, isSafeExternalUrl, isSafeImageSrc, toSafeImageSrc } from '../../lib/urlSafety';
 
 const defaultAvatarUrl = '/assets/images/DevJoaoG.png';
 const maxAvatarFileSize = 2 * 1024 * 1024;
 const supportedAvatarTypes = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
-const windowsDrivePathPattern = /^[a-z]:[\\/]/i;
-const downloadsPathPattern = /^(?:downloads(?:[\\/]|$)|.*[\\/]downloads(?:[\\/]|$))/i;
 const invalidAvatarPathMessage =
   'Use uma URL pública, um caminho público do projeto ou escolha uma imagem do computador.';
+const profileUrlFields: Array<{ field: keyof ProfileSettingsRecord; label: string }> = [
+  { field: 'github_url', label: 'GitHub' },
+  { field: 'linkedin_url', label: 'LinkedIn' },
+  { field: 'whatsapp_url', label: 'WhatsApp' },
+];
 
 const emptyProfile: ProfileSettingsRecord = {
   id: '',
@@ -28,12 +32,13 @@ const emptyProfile: ProfileSettingsRecord = {
 
 function AvatarPreview({ name, src }: { name: string; src: string }) {
   const [hasError, setHasError] = useState(false);
+  const safeSrc = toSafeImageSrc(src);
 
   useEffect(() => {
     setHasError(false);
   }, [src]);
 
-  if (!src || hasError) {
+  if (!safeSrc || hasError) {
     return (
       <div className="cms-avatar-preview is-empty">
         <UserRound size={34} />
@@ -44,7 +49,7 @@ function AvatarPreview({ name, src }: { name: string; src: string }) {
 
   return (
     <div className="cms-avatar-preview">
-      <img src={src} alt={`Avatar de ${name || 'perfil'}`} onError={() => setHasError(true)} />
+      <img src={safeSrc} alt={`Avatar de ${name || 'perfil'}`} onError={() => setHasError(true)} />
     </div>
   );
 }
@@ -99,14 +104,21 @@ export function AdminProfileSettings() {
       return null;
     }
 
-    const isPublicUrl = /^https?:\/\//i.test(trimmedValue);
-    const isProjectPublicPath = trimmedValue.startsWith('/');
-    const isInvalidLocalPath =
-      trimmedValue.toLowerCase().startsWith('file://') ||
-      windowsDrivePathPattern.test(trimmedValue) ||
-      (!isPublicUrl && !isProjectPublicPath && downloadsPathPattern.test(trimmedValue));
+    return isBlockedLocalPath(trimmedValue) || !isSafeImageSrc(trimmedValue)
+      ? invalidAvatarPathMessage
+      : null;
+  }
 
-    return isInvalidLocalPath ? invalidAvatarPathMessage : null;
+  function validateProfileUrls() {
+    for (const { field, label } of profileUrlFields) {
+      const value = profile[field].trim();
+
+      if (value && !isSafeExternalUrl(value)) {
+        return `${label}: use uma URL pública iniciada por http:// ou https://.`;
+      }
+    }
+
+    return null;
   }
 
   function updateAvatarUrl(value: string) {
@@ -163,6 +175,13 @@ export function AdminProfileSettings() {
     if (nextAvatarError) {
       setAvatarError(nextAvatarError);
       setErrorMessage(nextAvatarError);
+      return;
+    }
+
+    const nextUrlError = validateProfileUrls();
+
+    if (nextUrlError) {
+      setErrorMessage(nextUrlError);
       return;
     }
 
