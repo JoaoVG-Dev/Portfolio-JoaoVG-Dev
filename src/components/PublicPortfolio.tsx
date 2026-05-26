@@ -158,6 +158,23 @@ export function PublicPortfolio() {
     return () => observer.disconnect();
   }, [content, projectAnimationCount, certificateAnimationCount]);
 
+  useEffect(() => {
+    if (!content || window.location.hash.length <= 1) {
+      return;
+    }
+
+    const targetId = decodeURIComponent(window.location.hash.slice(1));
+    const target = document.getElementById(targetId);
+
+    if (!target) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ block: 'start' });
+    });
+  }, [content]);
+
   if (!content) {
     return (
       <div className="portfolio-page portfolio-page-loading" aria-busy="true">
