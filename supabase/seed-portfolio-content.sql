@@ -32,7 +32,7 @@ select
   '/assets/images/DevJoaoG.png',
   'https://github.com/DevJoao-G',
   'https://www.linkedin.com/in/devjoaog',
-  'https://wa.me/55219793824423',
+  'https://wa.me/5521979382423',
   email,
   'admin',
   true

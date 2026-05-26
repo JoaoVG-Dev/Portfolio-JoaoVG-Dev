@@ -1,4 +1,5 @@
 import type { PortfolioContent } from '../types/portfolio';
+import { whatsappContactUrl } from '../lib/contactLinks';
 
 const fallbackTechnologies = {
   html5: {
@@ -88,7 +89,7 @@ export const fallbackPortfolio: PortfolioContent = {
     ],
     email: 'devjoaog@outlook.com',
     location: 'Brasil, remoto',
-    whatsappUrl: 'https://wa.me/55219793824423',
+    whatsappUrl: whatsappContactUrl,
     githubUrl: 'https://github.com/DevJoao-G',
     linkedinUrl: 'https://www.linkedin.com/in/devjoaog',
     instagramUrl: 'https://instagram.com/joao.dev__',

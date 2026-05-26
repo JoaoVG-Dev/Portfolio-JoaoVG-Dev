@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { normalizeWhatsappContactUrl } from './contactLinks';
 import type { CmsRecord, CmsResourceConfig } from '../types/cms';
 
 export type DashboardSummary = {
@@ -37,6 +38,17 @@ export type ProfileSettingsRecord = {
   whatsapp_url: string;
   email: string;
 };
+
+function normalizeProfileSettingsRecord(record: ProfileSettingsRecord | null) {
+  if (!record) {
+    return null;
+  }
+
+  return {
+    ...record,
+    whatsapp_url: normalizeWhatsappContactUrl(record.whatsapp_url),
+  };
+}
 
 function getClient() {
   if (!supabase) {
@@ -266,7 +278,7 @@ export async function fetchAdminProfile(): Promise<ProfileSettingsRecord | null>
     throw error;
   }
 
-  return data as ProfileSettingsRecord | null;
+  return normalizeProfileSettingsRecord(data as ProfileSettingsRecord | null);
 }
 
 export async function updateAdminProfile(payload: Omit<ProfileSettingsRecord, 'id'>) {
@@ -277,9 +289,13 @@ export async function updateAdminProfile(payload: Omit<ProfileSettingsRecord, 'i
   }
 
   const client = getClient();
+  const normalizedPayload = {
+    ...payload,
+    whatsapp_url: normalizeWhatsappContactUrl(payload.whatsapp_url),
+  };
   const { data, error } = await client
     .from('profiles')
-    .update(payload)
+    .update(normalizedPayload)
     .eq('id', current.id)
     .select('id, name, title, bio, avatar_url, github_url, linkedin_url, whatsapp_url, email')
     .single();
@@ -288,5 +304,5 @@ export async function updateAdminProfile(payload: Omit<ProfileSettingsRecord, 'i
     throw error;
   }
 
-  return data as ProfileSettingsRecord;
+  return normalizeProfileSettingsRecord(data as ProfileSettingsRecord) as ProfileSettingsRecord;
 }

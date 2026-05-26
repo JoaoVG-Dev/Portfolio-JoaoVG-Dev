@@ -1,4 +1,5 @@
 import { fallbackPortfolio } from '../data/fallbackPortfolio';
+import { normalizeWhatsappContactUrl } from './contactLinks';
 import { supabase } from './supabase';
 import type {
   Certificate,
@@ -217,7 +218,7 @@ const mapProfile = (row: ProfileRow): Profile => ({
   bio: splitBio(row.bio),
   email: filledValue(row.email, fallbackPortfolio.profile.email),
   location: fallbackPortfolio.profile.location,
-  whatsappUrl: filledValue(row.whatsapp_url, fallbackPortfolio.profile.whatsappUrl),
+  whatsappUrl: normalizeWhatsappContactUrl(row.whatsapp_url),
   githubUrl: filledValue(row.github_url, fallbackPortfolio.profile.githubUrl),
   linkedinUrl: filledValue(row.linkedin_url, fallbackPortfolio.profile.linkedinUrl),
   instagramUrl: fallbackPortfolio.profile.instagramUrl,
