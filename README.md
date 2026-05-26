@@ -14,11 +14,11 @@ Portfolio em React com vitrine publica inspirada no projeto estatico original e 
 Crie um `.env` local com base em `.env.example`:
 
 ```bash
-VITE_SUPABASE_URL=https://wmzmzfjgzdhdtnhybsrz.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_vwBEDMiMPYE_UUdHZl55vA_xwsPkOif
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=SUA_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Use apenas a publishable key/anon key no frontend. Nunca exponha `service_role` no bundle, em `.env.example` ou em arquivos commitados. O `.env` real deve continuar no `.gitignore`.
+Use apenas a publishable key/anon key no frontend. Mantenha os valores reais somente no `.env` local e nas variáveis da Vercel. Nunca exponha `service_role` no bundle, em `.env.example` ou em arquivos commitados. O `.env` real deve continuar no `.gitignore`.
 
 ## Rodando Localmente
 
@@ -43,6 +43,7 @@ Aplique as migrations no projeto Supabase:
 -- supabase/migrations/20260520170000_create_portfolio_cms.sql
 -- supabase/migrations/20260521120000_improve_admin_role_provisioning.sql
 -- supabase/migrations/20260522120000_add_certificate_featured.sql
+-- supabase/migrations/20260525120000_limit_public_profile_columns.sql
 ```
 
 Voce pode aplicar pelo SQL Editor do Supabase copiando o conteudo dos arquivos, ou via Supabase CLI se o projeto estiver linkado e voce tiver as credenciais de banco:
@@ -64,6 +65,7 @@ As migrations criam:
 - triggers de `updated_at`
 - trigger `handle_new_auth_user()` para criar profile automaticamente quando um usuario nasce em `auth.users`
 - RLS e policies sem escrita publica
+- leitura publica de `profiles` limitada às colunas usadas pelo portfólio
 
 Visitantes leem apenas registros com `active = true`. Escrita e permitida apenas para usuarios autenticados cujo profile tenha `role = 'admin'`.
 
