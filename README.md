@@ -136,18 +136,18 @@ Apos login com o usuario admin, o painel gerencia:
 
 ### Projetos
 
-Projetos usam o campo `cover_url`, mas o admin nao pede URL livre. O formulario oferece uma lista de imagens locais servidas a partir de `public/assets/projects`.
+Projetos usam o campo `cover_url`. O formulario permite escolher imagens antigas de `public/assets/projects`, informar uma URL/caminho publico manualmente ou enviar uma nova imagem para o Supabase Storage.
 
 Para adicionar uma nova imagem de projeto:
 
-1. Rode o projeto com `npm run dev`.
-2. Abra `/admin/projects` e clique em `Novo projeto` ou edite um projeto.
-3. No campo `Imagem local do projeto`, use `Adicionar nova imagem local`.
-4. O Vite dev server salva o arquivo em `public/assets/projects` e preenche o `cover_url` automaticamente.
+1. Abra `/admin/projects` e clique em `Novo projeto` ou edite um projeto.
+2. No campo `Imagem do projeto`, use `Enviar nova imagem`.
+3. O arquivo e enviado para o bucket `portfolio-assets`, dentro da pasta `projects/`.
+4. A URL publica gerada pelo Supabase Storage preenche o `cover_url` automaticamente.
 
-Esse upload local funciona no ambiente de desenvolvimento porque o Vite consegue escrever no workspace. Em deploy estatico, o navegador nao consegue gravar arquivos dentro do repositorio; nesse caso, adicione a imagem no projeto antes do build ou use um backend/storage dedicado.
+O upload aceita JPG, PNG e WEBP de ate 5MB. Imagens antigas em `/assets/projects` e URLs externas continuam funcionando.
 
-`src/data/projectImages.ts` continua existindo como lista inicial/fallback, mas em desenvolvimento o painel tambem lista automaticamente os arquivos encontrados em `public/assets/projects`.
+`src/data/projectImages.ts` continua existindo como lista inicial/fallback, e em desenvolvimento o painel tambem lista automaticamente os arquivos encontrados em `public/assets/projects`.
 
 Novos projetos entram no final da lista automaticamente usando o maior `display_order` atual + 1.
 

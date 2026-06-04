@@ -31,10 +31,10 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
       { name: 'description', label: 'Descrição', type: 'textarea', placeholder: 'Resumo do problema, solução e resultado do projeto.' },
       {
         name: 'cover_url',
-        label: 'Imagem local do projeto',
+        label: 'Imagem do projeto',
         type: 'select',
         options: projectImageOptions,
-        hint: 'Escolha uma imagem já existente em public/assets/projects.',
+        hint: 'Escolha uma imagem existente, informe uma URL publica ou envie uma nova imagem para o Storage.',
       },
       { name: 'github_url', label: 'GitHub', type: 'url', placeholder: 'https://github.com/usuario/repositorio' },
       { name: 'deploy_url', label: 'Deploy', type: 'url', placeholder: 'https://projeto.vercel.app' },

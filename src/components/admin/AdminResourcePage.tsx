@@ -450,7 +450,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
         ...current,
         cover_url: uploadedImage.value,
       }));
-      setStatusMessage(`Imagem "${uploadedImage.label}" adicionada em public/assets/projects.`);
+      setStatusMessage(`Imagem "${uploadedImage.label}" enviada para o Supabase Storage.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
     } finally {
@@ -489,35 +489,49 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
 
     if (field.name === 'cover_url') {
       const imageOptions = projectImages.length > 0 ? projectImages : (field.options ?? []);
+      const selectedValue = String(value ?? '');
+      const selectedValueIsOption = imageOptions.some((option) => option.value === selectedValue);
+      const visibleImageOptions =
+        selectedValue && !selectedValueIsOption
+          ? [{ label: 'Imagem atual', value: selectedValue }, ...imageOptions]
+          : imageOptions;
 
       return (
         <>
           <select
-            value={String(value ?? '')}
+            value={selectedValue}
             onChange={(event) => updateField(field, event.target.value)}
             required={field.required}
           >
-            {imageOptions.map((option) => (
+            {visibleImageOptions.map((option) => (
               <option key={option.value || 'empty'} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
+          <input
+            id={fieldId}
+            type="text"
+            value={selectedValue}
+            onChange={(event) => updateField(field, event.target.value)}
+            placeholder="/assets/projects/imagem.png ou https://..."
+            aria-label="URL ou caminho publico da imagem do projeto"
+          />
           <div className="cms-upload-row">
             <span className="cms-upload-copy">
               <Upload size={17} />
-              {isUploadingProjectImage ? 'Enviando imagem...' : 'Adicionar nova imagem local'}
+              {isUploadingProjectImage ? 'Enviando imagem...' : 'Enviar nova imagem'}
             </span>
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              accept="image/png,image/jpeg,image/webp"
               disabled={isUploadingProjectImage}
               onChange={handleProjectImageUpload}
             />
           </div>
           <ImagePreview
-            src={String(value ?? '')}
-            alt="Preview da imagem local do projeto"
+            src={selectedValue}
+            alt="Preview da imagem do projeto"
           />
         </>
       );
