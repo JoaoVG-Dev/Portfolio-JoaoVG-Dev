@@ -787,10 +787,10 @@
   border-radius: var(--radius);
   background: var(--black-card);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
-  transform: translate3d(0, 28px, 0);
+  transform: translate3d(0, 18px, 0);
   transition:
-    transform 0.68s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.58s ease,
+    transform 0.56s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.48s ease,
     border-color var(--transition);
   transition-delay: var(--certificate-reveal-delay, 0ms), var(--certificate-reveal-delay, 0ms), 0ms;
   will-change: transform, opacity;
@@ -806,7 +806,7 @@
 }
 
 .certificate-card.show:hover {
-  transform: translate3d(0, -3px, 0);
+  transform: translate3d(0, -2px, 0);
 }
 
 .certificate-media {

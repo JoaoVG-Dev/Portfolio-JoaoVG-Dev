@@ -27,6 +27,25 @@ const navItems = [
 const fallbackCvUrl = '/assets/cv/Joao_Vitor_Guidoti_CV.pdf';
 const certificatesPerPage = 6;
 
+function scrollToCertificatesTop() {
+  const section = document.getElementById('certifications');
+
+  if (!section) {
+    return;
+  }
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      section.scrollIntoView({
+        block: 'start',
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+    });
+  });
+}
+
 function getPaginationItems(currentPage: number, totalPages: number) {
   if (totalPages <= 5) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -250,7 +269,7 @@ export function PublicPortfolio() {
           observer.unobserve(entry.target);
         });
       },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.18 },
+      { rootMargin: '0px 0px -4% 0px', threshold: 0.12 },
     );
 
     projectCards.forEach((card) => observer.observe(card));
@@ -321,6 +340,17 @@ export function PublicPortfolio() {
   const selectCertificateCategory = (category: CertificateCategoryFilter) => {
     setSelectedCertificateCategory(category);
     setCertificatePage(1);
+  };
+  const selectCertificatePage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalCertificatePages);
+
+    if (nextPage === certificatePage) {
+      scrollToCertificatesTop();
+      return;
+    }
+
+    setCertificatePage(nextPage);
+    scrollToCertificatesTop();
   };
 
   return (
@@ -514,7 +544,7 @@ export function PublicPortfolio() {
                     key={certificate.id}
                     style={
                       {
-                        '--certificate-reveal-delay': `${Math.min(index * 55, 275)}ms`,
+                        '--certificate-reveal-delay': `${Math.min(index * 45, 220)}ms`,
                       } as CSSProperties
                     }
                   >
@@ -556,7 +586,7 @@ export function PublicPortfolio() {
                   className="certificate-page-control"
                   type="button"
                   disabled={certificatePage === 1}
-                  onClick={() => setCertificatePage((currentPage) => Math.max(1, currentPage - 1))}
+                  onClick={() => selectCertificatePage(certificatePage - 1)}
                 >
                   <ChevronLeft size={17} />
                   <span>Anterior</span>
@@ -575,7 +605,7 @@ export function PublicPortfolio() {
                         aria-current={certificatePage === pageItem ? 'page' : undefined}
                         aria-label={`Ir para página ${pageItem}`}
                         key={pageItem}
-                        onClick={() => setCertificatePage(pageItem)}
+                        onClick={() => selectCertificatePage(pageItem)}
                       >
                         {pageItem}
                       </button>
@@ -587,7 +617,7 @@ export function PublicPortfolio() {
                   className="certificate-page-control"
                   type="button"
                   disabled={certificatePage === totalCertificatePages}
-                  onClick={() => setCertificatePage((currentPage) => Math.min(totalCertificatePages, currentPage + 1))}
+                  onClick={() => selectCertificatePage(certificatePage + 1)}
                 >
                   <span>Próxima</span>
                   <ChevronRight size={17} />
