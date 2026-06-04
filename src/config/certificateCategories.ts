@@ -1,25 +1,19 @@
 import type { CmsFieldOption } from '../types/cms';
 
 export const ALL_CERTIFICATE_CATEGORY = 'Todos' as const;
-export const FALLBACK_CERTIFICATE_CATEGORY = 'Outros' as const;
+export const DEFAULT_CERTIFICATE_CATEGORY = 'Fundamentos' as const;
 
 export const CERTIFICATE_CATEGORIES = [
   'Front-end',
   'Back-end',
-  'Graduação',
   'Fundamentos',
+  'Graduação',
   'Banco de Dados',
   'Certificações',
-  FALLBACK_CERTIFICATE_CATEGORY,
-] as const;
-
-export const CERTIFICATE_CATEGORY_FILTERS = [
-  ALL_CERTIFICATE_CATEGORY,
-  ...CERTIFICATE_CATEGORIES,
 ] as const;
 
 export type CertificateCategory = (typeof CERTIFICATE_CATEGORIES)[number];
-export type CertificateCategoryFilter = (typeof CERTIFICATE_CATEGORY_FILTERS)[number];
+export type CertificateCategoryFilter = typeof ALL_CERTIFICATE_CATEGORY | CertificateCategory;
 
 export const certificateCategoryOptions: CmsFieldOption[] = CERTIFICATE_CATEGORIES.map((category) => ({
   label: category,
@@ -38,6 +32,10 @@ const categoryAliases: Record<string, CertificateCategory> = {
   fundamentos: 'Fundamentos',
   fundamentals: 'Fundamentos',
   base: 'Fundamentos',
+  iniciante: 'Fundamentos',
+  iniciantes: 'Fundamentos',
+  basico: 'Fundamentos',
+  basicos: 'Fundamentos',
   'banco-de-dados': 'Banco de Dados',
   database: 'Banco de Dados',
   databases: 'Banco de Dados',
@@ -49,10 +47,10 @@ const categoryAliases: Record<string, CertificateCategory> = {
   certifications: 'Certificações',
   certificado: 'Certificações',
   certificados: 'Certificações',
-  outros: FALLBACK_CERTIFICATE_CATEGORY,
-  outro: FALLBACK_CERTIFICATE_CATEGORY,
-  other: FALLBACK_CERTIFICATE_CATEGORY,
-  others: FALLBACK_CERTIFICATE_CATEGORY,
+  outros: DEFAULT_CERTIFICATE_CATEGORY,
+  outro: DEFAULT_CERTIFICATE_CATEGORY,
+  other: DEFAULT_CERTIFICATE_CATEGORY,
+  others: DEFAULT_CERTIFICATE_CATEGORY,
 };
 
 function normalizeCategoryKey(category: string) {
@@ -70,8 +68,8 @@ export function normalizeCertificateCategory(category: string | null | undefined
   const normalizedCategory = normalizeCategoryKey(category ?? '');
 
   if (!normalizedCategory) {
-    return FALLBACK_CERTIFICATE_CATEGORY;
+    return DEFAULT_CERTIFICATE_CATEGORY;
   }
 
-  return categoryAliases[normalizedCategory] ?? FALLBACK_CERTIFICATE_CATEGORY;
+  return categoryAliases[normalizedCategory] ?? DEFAULT_CERTIFICATE_CATEGORY;
 }

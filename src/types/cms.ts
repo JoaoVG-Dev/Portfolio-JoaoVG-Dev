@@ -15,6 +15,7 @@ export type CmsField = {
   placeholder?: string;
   hint?: string;
   options?: CmsFieldOption[];
+  defaultValue?: string;
 };
 
 export type CmsRecordValue = string | number | boolean | null;

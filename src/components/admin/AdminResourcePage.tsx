@@ -48,6 +48,26 @@ function normalizeValue(field: CmsField, value: CmsRecordValue | string[] | unde
     return Boolean(value);
   }
 
+  if (field.type === 'select') {
+    if (Array.isArray(value)) {
+      return field.defaultValue ?? null;
+    }
+
+    const stringValue = typeof value === 'string' ? value.trim() : value == null ? '' : String(value);
+
+    if (!stringValue) {
+      return field.defaultValue ?? (field.required ? '' : null);
+    }
+
+    const isKnownOption = field.options?.some((option) => option.value === stringValue) ?? true;
+
+    if (field.defaultValue && !isKnownOption) {
+      return field.defaultValue;
+    }
+
+    return stringValue;
+  }
+
   if (value === '') {
     return field.required ? '' : null;
   }
@@ -504,9 +524,15 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     }
 
     if (field.type === 'select') {
-      const selectedValue = String(value ?? '');
+      let selectedValue = String(value ?? field.defaultValue ?? '');
       const selectOptions = field.options ?? [];
-      const currentValueIsOption = selectOptions.some((option) => option.value === selectedValue);
+      let currentValueIsOption = selectOptions.some((option) => option.value === selectedValue);
+
+      if (field.defaultValue && selectedValue && !currentValueIsOption) {
+        selectedValue = field.defaultValue;
+        currentValueIsOption = selectOptions.some((option) => option.value === selectedValue);
+      }
+
       const visibleOptions =
         selectedValue && !currentValueIsOption
           ? [{ label: `Atual: ${selectedValue}`, value: selectedValue }, ...selectOptions]

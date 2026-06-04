@@ -1,5 +1,5 @@
 import { projectImageOptions } from '../data/projectImages';
-import { certificateCategoryOptions, FALLBACK_CERTIFICATE_CATEGORY } from './certificateCategories';
+import { certificateCategoryOptions, DEFAULT_CERTIFICATE_CATEGORY } from './certificateCategories';
 import type { CmsResourceConfig } from '../types/cms';
 
 export const cmsResourceConfigs: CmsResourceConfig[] = [
@@ -88,7 +88,7 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
     initialRecord: {
       title: '',
       institution: '',
-      category: FALLBACK_CERTIFICATE_CATEGORY,
+      category: DEFAULT_CERTIFICATE_CATEGORY,
       certificate_url: '',
       workload: '',
       completed_at: '',
@@ -99,7 +99,14 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
     fields: [
       { name: 'title', label: 'Título', type: 'text', required: true, placeholder: 'React: desenvolvendo com JavaScript' },
       { name: 'institution', label: 'Instituição', type: 'text', placeholder: 'Alura' },
-      { name: 'category', label: 'Categoria', type: 'select', options: certificateCategoryOptions },
+      {
+        name: 'category',
+        label: 'Categoria',
+        type: 'select',
+        required: true,
+        options: certificateCategoryOptions,
+        defaultValue: DEFAULT_CERTIFICATE_CATEGORY,
+      },
       { name: 'certificate_url', label: 'Link do certificado', type: 'url', placeholder: 'https://exemplo.com/certificado' },
       { name: 'workload', label: 'Carga horária', type: 'text', placeholder: '32h' },
       { name: 'completed_at', label: 'Conclusão', type: 'date' },

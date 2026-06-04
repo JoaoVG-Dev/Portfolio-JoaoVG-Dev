@@ -688,26 +688,42 @@
 }
 
 .certificate-filter-bar {
+  max-width: 100vw;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.6rem;
   align-items: center;
+  overflow-x: auto;
+  margin-inline: -5%;
+  padding: 0 5% 0.35rem;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: 5%;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.certificate-filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .certificate-filter-button {
+  flex: 0 0 auto;
   min-height: 38px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   border: 1px solid rgba(255, 107, 91, 0.16);
-  border-radius: var(--radius);
-  padding: 0 0.8rem;
+  border-radius: 999px;
+  padding: 0 0.9rem;
   color: var(--muted);
   background: rgba(0, 0, 0, 0.24);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
+  scroll-snap-align: start;
   text-transform: uppercase;
+  white-space: nowrap;
   transition:
     border-color var(--transition),
     background var(--transition),
@@ -771,17 +787,18 @@
   border-radius: var(--radius);
   background: var(--black-card);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
-  transform: translateY(56px);
+  transform: translate3d(0, 28px, 0);
   transition:
-    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.7s ease,
+    transform 0.68s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.58s ease,
     border-color var(--transition);
+  transition-delay: var(--certificate-reveal-delay, 0ms), var(--certificate-reveal-delay, 0ms), 0ms;
   will-change: transform, opacity;
 }
 
 .certificate-card.show {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
 }
 
 .certificate-card:hover {
@@ -789,7 +806,7 @@
 }
 
 .certificate-card.show:hover {
-  transform: translateY(-4px);
+  transform: translate3d(0, -3px, 0);
 }
 
 .certificate-media {
@@ -1340,6 +1357,16 @@
     row-gap: 2rem;
   }
 
+  .certificate-filter-bar {
+    max-width: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: visible;
+    margin-inline: 0;
+    padding: 0;
+    scroll-snap-type: none;
+  }
+
   .card-project:nth-child(odd) {
     transform: translateX(80px);
   }
@@ -1353,17 +1380,9 @@
     transform: translateX(0);
   }
 
-  .certificate-card:nth-child(odd) {
-    transform: translateX(72px);
-  }
-
-  .certificate-card:nth-child(even) {
-    transform: translateX(-72px);
-  }
-
   .certificate-card.show {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 

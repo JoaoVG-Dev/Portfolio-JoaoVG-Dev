@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { Award, ChevronLeft, ChevronRight, Code2, ExternalLink, ImageIcon, UserRound } from 'lucide-react';
 import {
   ALL_CERTIFICATE_CATEGORY,
   CERTIFICATE_CATEGORIES,
-  CERTIFICATE_CATEGORY_FILTERS,
   type CertificateCategory,
   type CertificateCategoryFilter,
   normalizeCertificateCategory,
@@ -202,6 +201,14 @@ export function PublicPortfolio() {
     return counts;
   }, [visibleCertificates]);
 
+  const activeCertificateCategoryFilters = useMemo<CertificateCategoryFilter[]>(
+    () => [
+      ALL_CERTIFICATE_CATEGORY,
+      ...CERTIFICATE_CATEGORIES.filter((category) => certificateCategoryCounts[category] > 0),
+    ],
+    [certificateCategoryCounts],
+  );
+
   const filteredCertificates = useMemo(
     () =>
       selectedCertificateCategory === ALL_CERTIFICATE_CATEGORY
@@ -235,10 +242,15 @@ export function PublicPortfolio() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          entry.target.classList.toggle('show', entry.isIntersecting);
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          entry.target.classList.add('show');
+          observer.unobserve(entry.target);
         });
       },
-      { threshold: 0.35 },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.18 },
     );
 
     projectCards.forEach((card) => observer.observe(card));
@@ -249,6 +261,12 @@ export function PublicPortfolio() {
   useEffect(() => {
     setCertificatePage(1);
   }, [selectedCertificateCategory]);
+
+  useEffect(() => {
+    if (!activeCertificateCategoryFilters.includes(selectedCertificateCategory)) {
+      setSelectedCertificateCategory(ALL_CERTIFICATE_CATEGORY);
+    }
+  }, [activeCertificateCategoryFilters, selectedCertificateCategory]);
 
   useEffect(() => {
     if (certificatePage > totalCertificatePages) {
@@ -457,7 +475,7 @@ export function PublicPortfolio() {
             </header>
 
             <div className="certificate-filter-bar" role="group" aria-label="Filtrar certificados por categoria">
-              {CERTIFICATE_CATEGORY_FILTERS.map((category) => {
+              {activeCertificateCategoryFilters.map((category) => {
                 const isActive = selectedCertificateCategory === category;
                 const count =
                   category === ALL_CERTIFICATE_CATEGORY
@@ -494,7 +512,11 @@ export function PublicPortfolio() {
                   <article
                     className="certificate-card"
                     key={certificate.id}
-                    style={{ transitionDelay: `${Math.min(index * 70, 280)}ms` }}
+                    style={
+                      {
+                        '--certificate-reveal-delay': `${Math.min(index * 55, 275)}ms`,
+                      } as CSSProperties
+                    }
                   >
                     <div className="certificate-media">
                       <CertificateImage />
