@@ -1,5 +1,13 @@
-import { useEffect, useState } from 'react';
-import { Award, Code2, ExternalLink, ImageIcon, UserRound } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Award, ChevronLeft, ChevronRight, Code2, ExternalLink, ImageIcon, UserRound } from 'lucide-react';
+import {
+  ALL_CERTIFICATE_CATEGORY,
+  CERTIFICATE_CATEGORIES,
+  CERTIFICATE_CATEGORY_FILTERS,
+  type CertificateCategory,
+  type CertificateCategoryFilter,
+  normalizeCertificateCategory,
+} from '../config/certificateCategories';
 import { usePortfolioContent } from '../hooks/usePortfolioContent';
 import {
   toSafeExternalUrl,
@@ -18,6 +26,29 @@ const navItems = [
   { label: 'Contact', href: '#contact' },
 ];
 const fallbackCvUrl = '/assets/cv/Joao_Vitor_Guidoti_CV.pdf';
+const certificatesPerPage = 6;
+
+function getPaginationItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pageSet = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+  const pages = Array.from(pageSet)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((first, second) => first - second);
+
+  return pages.reduce<Array<number | 'ellipsis'>>((items, page) => {
+    const previousItem = items.at(-1);
+
+    if (typeof previousItem === 'number' && page - previousItem > 1) {
+      items.push('ellipsis');
+    }
+
+    items.push(page);
+    return items;
+  }, []);
+}
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -133,10 +164,67 @@ function ProfileAvatar({ name, src }: { name: string; src: string }) {
 
 export function PublicPortfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedCertificateCategory, setSelectedCertificateCategory] =
+    useState<CertificateCategoryFilter>(ALL_CERTIFICATE_CATEGORY);
+  const [certificatePage, setCertificatePage] = useState(1);
   const { content, isLoading } = usePortfolioContent();
-  const projectAnimationCount = content?.projects.filter((project) => project.active === true).length ?? 0;
-  const certificateAnimationCount =
-    content?.certificates.filter((certificate) => certificate.active === true).length ?? 0;
+
+  const publishedProjects = useMemo(
+    () =>
+      content
+        ? [...content.projects]
+            .filter((project) => project.active === true)
+            .sort(compareFeaturedFirst)
+        : [],
+    [content],
+  );
+
+  const visibleCertificates = useMemo(
+    () =>
+      content
+        ? [...content.certificates]
+            .filter((certificate) => certificate.active === true)
+            .sort(compareCertificates)
+        : [],
+    [content],
+  );
+
+  const certificateCategoryCounts = useMemo(() => {
+    const counts = CERTIFICATE_CATEGORIES.reduce<Record<CertificateCategory, number>>((categoryCounts, category) => {
+      categoryCounts[category] = 0;
+      return categoryCounts;
+    }, {} as Record<CertificateCategory, number>);
+
+    visibleCertificates.forEach((certificate) => {
+      counts[normalizeCertificateCategory(certificate.category)] += 1;
+    });
+
+    return counts;
+  }, [visibleCertificates]);
+
+  const filteredCertificates = useMemo(
+    () =>
+      selectedCertificateCategory === ALL_CERTIFICATE_CATEGORY
+        ? visibleCertificates
+        : visibleCertificates.filter(
+            (certificate) => normalizeCertificateCategory(certificate.category) === selectedCertificateCategory,
+          ),
+    [selectedCertificateCategory, visibleCertificates],
+  );
+
+  const totalCertificatePages = Math.max(1, Math.ceil(filteredCertificates.length / certificatesPerPage));
+  const certificatePaginationItems = useMemo(
+    () => getPaginationItems(certificatePage, totalCertificatePages),
+    [certificatePage, totalCertificatePages],
+  );
+  const paginatedCertificates = useMemo(() => {
+    const startIndex = (certificatePage - 1) * certificatesPerPage;
+
+    return filteredCertificates.slice(startIndex, startIndex + certificatesPerPage);
+  }, [certificatePage, filteredCertificates]);
+  const shouldShowCertificatePagination = filteredCertificates.length > certificatesPerPage;
+  const projectAnimationKey = publishedProjects.map((project) => project.id).join('|');
+  const certificateAnimationKey = paginatedCertificates.map((certificate) => certificate.id).join('|');
 
   useEffect(() => {
     if (!content) {
@@ -156,7 +244,17 @@ export function PublicPortfolio() {
     projectCards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [content, projectAnimationCount, certificateAnimationCount]);
+  }, [content, projectAnimationKey, certificateAnimationKey]);
+
+  useEffect(() => {
+    setCertificatePage(1);
+  }, [selectedCertificateCategory]);
+
+  useEffect(() => {
+    if (certificatePage > totalCertificatePages) {
+      setCertificatePage(totalCertificatePages);
+    }
+  }, [certificatePage, totalCertificatePages]);
 
   useEffect(() => {
     if (!content || window.location.hash.length <= 1) {
@@ -185,14 +283,8 @@ export function PublicPortfolio() {
     );
   }
 
-  const { profile, technologies, projects, certificates } = content;
+  const { profile, technologies } = content;
   const featuredTechnologies = technologies.filter((technology) => technology.isFeatured);
-  const publishedProjects = [...projects]
-    .filter((project) => project.active === true)
-    .sort(compareFeaturedFirst);
-  const visibleCertificates = [...certificates]
-    .filter((certificate) => certificate.active === true)
-    .sort(compareCertificates);
   const githubUrl = toSafeExternalUrl(profile.githubUrl) ?? '#contact';
   const linkedinUrl = toSafeExternalUrl(profile.linkedinUrl) ?? '#contact';
   const instagramUrl = toSafeExternalUrl(profile.instagramUrl) ?? '#contact';
@@ -208,6 +300,10 @@ export function PublicPortfolio() {
   const whatsappIsExternal = whatsappUrl.startsWith('http');
 
   const closeMenu = () => setIsMenuOpen(false);
+  const selectCertificateCategory = (category: CertificateCategoryFilter) => {
+    setSelectedCertificateCategory(category);
+    setCertificatePage(1);
+  };
 
   return (
     <div className="portfolio-page" aria-busy={isLoading}>
@@ -360,23 +456,52 @@ export function PublicPortfolio() {
               <h1 id="certifications-title">Certifications</h1>
             </header>
 
-            <div className="certificates-grid">
-              {visibleCertificates.length === 0 && (
+            <div className="certificate-filter-bar" role="group" aria-label="Filtrar certificados por categoria">
+              {CERTIFICATE_CATEGORY_FILTERS.map((category) => {
+                const isActive = selectedCertificateCategory === category;
+                const count =
+                  category === ALL_CERTIFICATE_CATEGORY
+                    ? visibleCertificates.length
+                    : certificateCategoryCounts[category];
+
+                return (
+                  <button
+                    className={`certificate-filter-button${isActive ? ' is-active' : ''}`}
+                    type="button"
+                    aria-pressed={isActive}
+                    aria-label={`${category}: ${count} certificados`}
+                    key={category}
+                    onClick={() => selectCertificateCategory(category)}
+                  >
+                    {category}
+                    <span className="certificate-filter-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="certificates-grid" aria-live="polite">
+              {filteredCertificates.length === 0 && (
                 <p className="certificates-empty">Certificações em atualização.</p>
               )}
 
-              {visibleCertificates.map((certificate) => {
+              {paginatedCertificates.map((certificate, index) => {
                 const completedAt = formatDate(certificate.completedAt);
                 const certificateHref = toSafeExternalUrl(certificate.certificateUrl);
+                const certificateCategory = normalizeCertificateCategory(certificate.category);
 
                 return (
-                  <article className="certificate-card" key={certificate.id}>
+                  <article
+                    className="certificate-card"
+                    key={certificate.id}
+                    style={{ transitionDelay: `${Math.min(index * 70, 280)}ms` }}
+                  >
                     <div className="certificate-media">
                       <CertificateImage />
                     </div>
                     <div className="certificate-content">
                       <div>
-                        <p className="certificate-kicker">{certificate.category ?? 'Certificate'}</p>
+                        <p className="certificate-kicker">{certificateCategory}</p>
                         <h2>{certificate.title}</h2>
                         {certificate.institution && <p>{certificate.institution}</p>}
                       </div>
@@ -402,6 +527,51 @@ export function PublicPortfolio() {
                 );
               })}
             </div>
+
+            {shouldShowCertificatePagination && (
+              <nav className="certificates-pagination" aria-label="Paginação de certificados">
+                <button
+                  className="certificate-page-control"
+                  type="button"
+                  disabled={certificatePage === 1}
+                  onClick={() => setCertificatePage((currentPage) => Math.max(1, currentPage - 1))}
+                >
+                  <ChevronLeft size={17} />
+                  <span>Anterior</span>
+                </button>
+
+                <div className="certificate-page-list">
+                  {certificatePaginationItems.map((pageItem, index) =>
+                    pageItem === 'ellipsis' ? (
+                      <span className="certificate-page-ellipsis" key={`ellipsis-${index}`}>
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        className={`certificate-page-button${certificatePage === pageItem ? ' is-active' : ''}`}
+                        type="button"
+                        aria-current={certificatePage === pageItem ? 'page' : undefined}
+                        aria-label={`Ir para página ${pageItem}`}
+                        key={pageItem}
+                        onClick={() => setCertificatePage(pageItem)}
+                      >
+                        {pageItem}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                <button
+                  className="certificate-page-control"
+                  type="button"
+                  disabled={certificatePage === totalCertificatePages}
+                  onClick={() => setCertificatePage((currentPage) => Math.min(totalCertificatePages, currentPage + 1))}
+                >
+                  <span>Próxima</span>
+                  <ChevronRight size={17} />
+                </button>
+              </nav>
+            )}
           </div>
         </section>
 

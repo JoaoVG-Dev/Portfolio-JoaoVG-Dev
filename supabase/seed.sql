@@ -211,6 +211,7 @@ insert into public.certificates (
   workload,
   completed_at,
   active,
+  featured,
   display_order
 ) values (
   '30000000-0000-4000-8000-000000000001',

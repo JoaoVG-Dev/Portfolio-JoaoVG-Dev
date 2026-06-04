@@ -504,13 +504,21 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     }
 
     if (field.type === 'select') {
+      const selectedValue = String(value ?? '');
+      const selectOptions = field.options ?? [];
+      const currentValueIsOption = selectOptions.some((option) => option.value === selectedValue);
+      const visibleOptions =
+        selectedValue && !currentValueIsOption
+          ? [{ label: `Atual: ${selectedValue}`, value: selectedValue }, ...selectOptions]
+          : selectOptions;
+
       return (
         <select
-          value={String(value ?? '')}
+          value={selectedValue}
           onChange={(event) => updateField(field, event.target.value)}
           required={field.required}
         >
-          {(field.options ?? []).map((option) => (
+          {visibleOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
