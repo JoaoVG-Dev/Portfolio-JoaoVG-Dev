@@ -257,8 +257,17 @@ export function PublicPortfolio() {
       return undefined;
     }
 
-    const projectCards = document.querySelectorAll('.card-project, .certificate-card');
-    const observer = new IntersectionObserver(
+    const projectCards = document.querySelectorAll('.card-project');
+    const certificateCards = document.querySelectorAll('.certificate-card');
+    const projectObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle('show', entry.isIntersecting);
+        });
+      },
+      { rootMargin: '0px 0px -4% 0px', threshold: 0.12 },
+    );
+    const certificateObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) {
@@ -266,15 +275,19 @@ export function PublicPortfolio() {
           }
 
           entry.target.classList.add('show');
-          observer.unobserve(entry.target);
+          certificateObserver.unobserve(entry.target);
         });
       },
       { rootMargin: '0px 0px -4% 0px', threshold: 0.12 },
     );
 
-    projectCards.forEach((card) => observer.observe(card));
+    projectCards.forEach((card) => projectObserver.observe(card));
+    certificateCards.forEach((card) => certificateObserver.observe(card));
 
-    return () => observer.disconnect();
+    return () => {
+      projectObserver.disconnect();
+      certificateObserver.disconnect();
+    };
   }, [content, projectAnimationKey, certificateAnimationKey]);
 
   useEffect(() => {
