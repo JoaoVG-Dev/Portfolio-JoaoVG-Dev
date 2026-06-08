@@ -766,47 +766,52 @@
   text-transform: none;
 }
 
-.cms-upload-row {
+.cms-project-image-field {
   display: grid;
-  gap: 0.6rem;
-  border: 1px dashed rgba(255, 107, 91, 0.26);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  background: rgba(139, 0, 0, 0.1);
+  gap: 0.85rem;
 }
 
-.cms-upload-copy {
+.cms-image-upload-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.cms-upload-button {
+  width: max-content;
+  min-height: 42px;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  color: var(--red-light);
-  font-size: 0.78rem;
+  border: 1px solid rgba(255, 107, 91, 0.28);
+  border-radius: var(--radius);
+  padding: 0 0.95rem;
+  color: var(--white);
+  background: rgba(139, 0, 0, 0.16);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  transition:
+    border-color var(--transition),
+    background var(--transition),
+    transform var(--transition);
 }
 
-.cms-upload-row input[type='file'] {
-  width: 100%;
-  min-height: auto;
-  border: 0;
-  padding: 0;
-  color: var(--muted);
-  background: transparent;
-  font-size: 0.86rem;
-  letter-spacing: 0;
-  text-transform: none;
+.cms-upload-button:hover {
+  border-color: rgba(255, 107, 91, 0.46);
+  background: rgba(139, 0, 0, 0.24);
+  transform: translateY(-1px);
 }
 
-.cms-upload-row input[type='file']::file-selector-button {
-  min-height: 38px;
-  margin-right: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0 0.85rem;
-  color: var(--white);
-  background: rgba(255, 255, 255, 0.06);
-  font-weight: 700;
+.cms-upload-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
+.cms-file-input {
+  display: none;
 }
 
 .cms-icon-preview {

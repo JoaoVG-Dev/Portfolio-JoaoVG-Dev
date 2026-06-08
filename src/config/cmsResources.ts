@@ -1,4 +1,3 @@
-import { projectImageOptions } from '../data/projectImages';
 import { certificateCategoryOptions, DEFAULT_CERTIFICATE_CATEGORY } from './certificateCategories';
 import type { CmsResourceConfig } from '../types/cms';
 
@@ -32,9 +31,7 @@ export const cmsResourceConfigs: CmsResourceConfig[] = [
       {
         name: 'cover_url',
         label: 'Imagem do projeto',
-        type: 'select',
-        options: projectImageOptions,
-        hint: 'Escolha uma imagem existente, informe uma URL publica ou envie uma nova imagem para o Storage.',
+        type: 'text',
       },
       { name: 'github_url', label: 'GitHub', type: 'url', placeholder: 'https://github.com/usuario/repositorio' },
       { name: 'deploy_url', label: 'Deploy', type: 'url', placeholder: 'https://projeto.vercel.app' },

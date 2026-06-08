@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Award,
   Check,
@@ -26,9 +26,8 @@ import {
   updateCmsRecord,
   type TechnologyOption,
 } from '../../lib/adminRepository';
-import { fetchProjectImages, uploadProjectImage } from '../../lib/projectImageRepository';
+import { uploadProjectImage } from '../../lib/projectImageRepository';
 import { isSafeExternalUrl, isSafeImageSrc, toSafeExternalUrl, toSafeImageSrc } from '../../lib/urlSafety';
-import type { ProjectImageOption } from '../../data/projectImages';
 import type { CmsField, CmsRecord, CmsRecordValue, CmsResourceConfig } from '../../types/cms';
 
 type AdminResourcePageProps = {
@@ -127,13 +126,6 @@ function getNextDisplayOrder(records: CmsRecord[]) {
   return maxOrder + 1;
 }
 
-function upsertProjectImageOption(options: ProjectImageOption[], option: ProjectImageOption) {
-  const map = new Map(options.map((item) => [item.value, item]));
-  map.set(option.value, option);
-
-  return Array.from(map.values());
-}
-
 function formatDate(value: CmsRecordValue | string[] | undefined) {
   if (typeof value !== 'string' || !value) {
     return null;
@@ -164,6 +156,23 @@ function ImagePreview({ alt, src }: { alt: string; src: string }) {
       <img src={safeSrc} alt={alt} loading="lazy" decoding="async" onError={() => setHasError(true)} />
     </div>
   );
+}
+
+function readImagePreview(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error('Preview indisponivel.'));
+    };
+    reader.onerror = () => reject(new Error('Preview indisponivel.'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function IconPreview({ name, src }: { name: string; src: string }) {
@@ -203,8 +212,9 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [technologyOptions, setTechnologyOptions] = useState<TechnologyOption[]>([]);
   const [selectedTechnologyIds, setSelectedTechnologyIds] = useState<string[]>([]);
-  const [projectImages, setProjectImages] = useState<ProjectImageOption[]>([]);
+  const [projectImagePreviewSrc, setProjectImagePreviewSrc] = useState<string | null>(null);
   const [isUploadingProjectImage, setIsUploadingProjectImage] = useState(false);
+  const projectImageInputRef = useRef<HTMLInputElement | null>(null);
 
   const isProjectResource = config.key === 'projects';
   const isCertificateResource = config.key === 'certificates';
@@ -264,15 +274,13 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     setErrorMessage(null);
 
     try {
-      const [nextRecords, technologies, images] = await Promise.all([
+      const [nextRecords, technologies] = await Promise.all([
         fetchCmsRecords(config),
         isProjectResource ? fetchTechnologyOptions() : Promise.resolve([]),
-        isProjectResource ? fetchProjectImages() : Promise.resolve([]),
       ]);
 
       setRecords(nextRecords);
       setTechnologyOptions(technologies);
-      setProjectImages(images);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível carregar dados.');
     } finally {
@@ -287,6 +295,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     setEditingId(null);
     setIsFormOpen(shouldOpenCreateForm);
     setSelectedTechnologyIds([]);
+    setProjectImagePreviewSrc(null);
     refreshRecords();
   }, [config]);
 
@@ -304,6 +313,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
       display_order: getNextDisplayOrder(records),
     });
     setSelectedTechnologyIds([]);
+    setProjectImagePreviewSrc(null);
     setStatusMessage(null);
     setErrorMessage(null);
     setIsFormOpen(true);
@@ -313,6 +323,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     setEditingId(String(record.id));
     setFormRecord(cloneRecord(record));
     setSelectedTechnologyIds(getStringArray(record, 'technology_ids'));
+    setProjectImagePreviewSrc(null);
     setStatusMessage(null);
     setErrorMessage(null);
     setIsFormOpen(true);
@@ -331,6 +342,7 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     setEditingId(null);
     setFormRecord(cloneRecord(config.initialRecord));
     setSelectedTechnologyIds([]);
+    setProjectImagePreviewSrc(null);
     setIsFormOpen(false);
   }
 
@@ -444,14 +456,21 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     setStatusMessage(null);
 
     try {
+      try {
+        setProjectImagePreviewSrc(await readImagePreview(file));
+      } catch {
+        setProjectImagePreviewSrc(null);
+      }
+
       const uploadedImage = await uploadProjectImage(file);
-      setProjectImages((current) => upsertProjectImageOption(current, uploadedImage));
       setFormRecord((current) => ({
         ...current,
         cover_url: uploadedImage.value,
       }));
+      setProjectImagePreviewSrc(null);
       setStatusMessage(`Imagem "${uploadedImage.label}" enviada para o Supabase Storage.`);
     } catch (error) {
+      setProjectImagePreviewSrc(null);
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
     } finally {
       setIsUploadingProjectImage(false);
@@ -488,52 +507,37 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
     }
 
     if (field.name === 'cover_url') {
-      const imageOptions = projectImages.length > 0 ? projectImages : (field.options ?? []);
       const selectedValue = String(value ?? '');
-      const selectedValueIsOption = imageOptions.some((option) => option.value === selectedValue);
-      const visibleImageOptions =
-        selectedValue && !selectedValueIsOption
-          ? [{ label: 'Imagem atual', value: selectedValue }, ...imageOptions]
-          : imageOptions;
+      const previewSrc = projectImagePreviewSrc ?? selectedValue;
 
       return (
-        <>
-          <select
-            value={selectedValue}
-            onChange={(event) => updateField(field, event.target.value)}
-            required={field.required}
-          >
-            {visibleImageOptions.map((option) => (
-              <option key={option.value || 'empty'} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <input
-            id={fieldId}
-            type="text"
-            value={selectedValue}
-            onChange={(event) => updateField(field, event.target.value)}
-            placeholder="/assets/projects/imagem.png ou https://..."
-            aria-label="URL ou caminho publico da imagem do projeto"
-          />
-          <div className="cms-upload-row">
-            <span className="cms-upload-copy">
+        <div className="cms-project-image-field">
+          <div className="cms-image-upload-actions">
+            <button
+              className="cms-upload-button"
+              type="button"
+              disabled={isUploadingProjectImage}
+              onClick={() => projectImageInputRef.current?.click()}
+            >
               <Upload size={17} />
-              {isUploadingProjectImage ? 'Enviando imagem...' : 'Enviar nova imagem'}
-            </span>
+              {isUploadingProjectImage ? 'Enviando imagem...' : selectedValue ? 'Trocar imagem' : 'Escolher imagem'}
+            </button>
             <input
+              className="cms-file-input"
+              ref={projectImageInputRef}
+              id={fieldId}
               type="file"
               accept="image/png,image/jpeg,image/webp"
               disabled={isUploadingProjectImage}
+              aria-label="Escolher imagem do projeto"
               onChange={handleProjectImageUpload}
             />
           </div>
           <ImagePreview
-            src={selectedValue}
+            src={previewSrc}
             alt="Preview da imagem do projeto"
           />
-        </>
+        </div>
       );
     }
 
@@ -757,20 +761,30 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
               <fieldset className="cms-form-group" key={group.title}>
                 <legend>{group.title}</legend>
                 <div className="cms-form-grid">
-                  {group.fields.map((field) => (
-                    <label
-                      className={
-                        field.type === 'textarea' || field.type === 'url' || field.name === 'cover_url'
-                          ? 'cms-field wide'
-                          : 'cms-field'
-                      }
-                      key={field.name}
-                    >
-                      {field.label}
-                      {renderField(field)}
-                      {field.hint && <span className="cms-field-hint">{field.hint}</span>}
-                    </label>
-                  ))}
+                  {group.fields.map((field) => {
+                    const fieldClass =
+                      field.type === 'textarea' || field.type === 'url' || field.name === 'cover_url'
+                        ? 'cms-field wide'
+                        : 'cms-field';
+
+                    if (field.name === 'cover_url') {
+                      return (
+                        <div className={fieldClass} key={field.name}>
+                          <span>{field.label}</span>
+                          {renderField(field)}
+                          {field.hint && <span className="cms-field-hint">{field.hint}</span>}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <label className={fieldClass} key={field.name}>
+                        {field.label}
+                        {renderField(field)}
+                        {field.hint && <span className="cms-field-hint">{field.hint}</span>}
+                      </label>
+                    );
+                  })}
                 </div>
               </fieldset>
             ))}
