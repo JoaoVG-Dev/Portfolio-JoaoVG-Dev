@@ -237,8 +237,12 @@ export function AdminResourcePage({ config }: AdminResourcePageProps) {
           ),
         },
         {
-          title: 'Links e imagem',
-          fields: fields.filter((field) => ['cover_url', 'github_url', 'deploy_url'].includes(field.name)),
+          title: 'Imagem',
+          fields: fields.filter((field) => ['cover_url'].includes(field.name)),
+        },
+        {
+          title: 'Links do projeto',
+          fields: fields.filter((field) => ['deploy_url', 'github_url'].includes(field.name)),
         },
         {
           title: 'Status e publicação',
