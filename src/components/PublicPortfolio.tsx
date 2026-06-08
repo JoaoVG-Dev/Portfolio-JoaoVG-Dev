@@ -182,6 +182,7 @@ function ProfileAvatar({ name, src }: { name: string; src: string }) {
 
 export function PublicPortfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [expandedLanguageProjectIds, setExpandedLanguageProjectIds] = useState<string[]>([]);
   const [selectedCertificateCategory, setSelectedCertificateCategory] =
     useState<CertificateCategoryFilter>(ALL_CERTIFICATE_CATEGORY);
   const [certificatePage, setCertificatePage] = useState(1);
@@ -295,6 +296,12 @@ export function PublicPortfolio() {
   }, [selectedCertificateCategory]);
 
   useEffect(() => {
+    setExpandedLanguageProjectIds((current) =>
+      current.filter((projectId) => publishedProjects.some((project) => project.id === projectId)),
+    );
+  }, [publishedProjects]);
+
+  useEffect(() => {
     if (!activeCertificateCategoryFilters.includes(selectedCertificateCategory)) {
       setSelectedCertificateCategory(ALL_CERTIFICATE_CATEGORY);
     }
@@ -350,6 +357,13 @@ export function PublicPortfolio() {
   const whatsappIsExternal = whatsappUrl.startsWith('http');
 
   const closeMenu = () => setIsMenuOpen(false);
+  const toggleProjectLanguages = (projectId: string) => {
+    setExpandedLanguageProjectIds((current) =>
+      current.includes(projectId)
+        ? current.filter((currentProjectId) => currentProjectId !== projectId)
+        : [...current, projectId],
+    );
+  };
   const selectCertificateCategory = (category: CertificateCategoryFilter) => {
     setSelectedCertificateCategory(category);
     setCertificatePage(1);
@@ -476,6 +490,9 @@ export function PublicPortfolio() {
               const projectHref =
                 toSafeExternalUrl(project.liveUrl) ?? toSafeExternalUrl(project.repositoryUrl) ?? '#contact';
               const isExternal = projectHref.startsWith('http');
+              const hasTechnologies = project.technologies.length > 0;
+              const isLanguageListOpen = expandedLanguageProjectIds.includes(project.id);
+              const languageListId = `project-languages-${project.id}`;
 
               return (
                 <div className="card-project" key={project.id}>
@@ -487,11 +504,28 @@ export function PublicPortfolio() {
                       <p>
                         {project.title} | {project.category}
                       </p>
-                      {project.technologies.length > 0 && (
-                        <div className="project-tech-list" aria-label="Tecnologias usadas">
-                          {project.technologies.map((technology) => (
-                            <span key={`${project.id}-${technology.id}`}>{technology.name}</span>
-                          ))}
+                      {hasTechnologies && (
+                        <div className="project-languages">
+                          <button
+                            className="project-languages-toggle"
+                            type="button"
+                            aria-expanded={isLanguageListOpen}
+                            aria-controls={languageListId}
+                            onClick={() => toggleProjectLanguages(project.id)}
+                          >
+                            {isLanguageListOpen ? 'Fechar linguagens ↑' : 'Ver linguagens ↓'}
+                          </button>
+                          <div
+                            className={`project-tech-panel${isLanguageListOpen ? ' is-open' : ''}`}
+                            id={languageListId}
+                            aria-hidden={!isLanguageListOpen}
+                          >
+                            <div className="project-tech-list" aria-label="Tecnologias usadas">
+                              {project.technologies.map((technology) => (
+                                <span key={`${project.id}-${technology.id}`}>{technology.name}</span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
