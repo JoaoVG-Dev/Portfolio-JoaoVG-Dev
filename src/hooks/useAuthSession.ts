@@ -31,28 +31,40 @@ export function useAuthSession(): AuthSessionState {
     }
 
     let isMounted = true;
+    let activeSessionUserId: string | null = null;
+    let resolvedAdminUserId: string | null = null;
 
-    async function resolveSession(nextSession: Session | null) {
+    async function resolveSession(nextSession: Session | null, forceAdminCheck = false) {
       if (!isMounted) {
         return;
       }
 
+      const nextUserId = nextSession?.user.id ?? null;
+      activeSessionUserId = nextUserId;
       setSession(nextSession);
 
       if (!nextSession) {
+        resolvedAdminUserId = null;
         setIsAdmin(false);
+        setAuthError(null);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!forceAdminCheck && resolvedAdminUserId === nextUserId) {
         setIsLoading(false);
         return;
       }
 
       const { data, error } = await client!.rpc('is_admin');
 
-      if (!isMounted) {
+      if (!isMounted || activeSessionUserId !== nextUserId) {
         return;
       }
 
       const hasAdminRole = Boolean(data) && !error;
 
+      resolvedAdminUserId = hasAdminRole ? nextUserId : null;
       setIsAdmin(hasAdminRole);
       setAuthError(
         hasAdminRole ? null : 'Seu usuário ainda não possui permissão de administrador.',
@@ -60,11 +72,29 @@ export function useAuthSession(): AuthSessionState {
       setIsLoading(false);
     }
 
-    client.auth.getSession().then(({ data }) => resolveSession(data.session));
+    client.auth.getSession().then(({ data }) => resolveSession(data.session, true));
 
-    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
-      setIsLoading(true);
-      resolveSession(nextSession);
+    const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
+      const nextUserId = nextSession?.user.id ?? null;
+      const isSameUser = Boolean(nextUserId && nextUserId === activeSessionUserId);
+      const canReuseAdminCheck = Boolean(isSameUser && resolvedAdminUserId === nextUserId);
+
+      if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && canReuseAdminCheck) {
+        setSession(nextSession);
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setIsLoading(true);
+        resolveSession(null, true);
+        return;
+      }
+
+      if (!isSameUser || event === 'USER_UPDATED') {
+        setIsLoading(true);
+      }
+
+      resolveSession(nextSession, !isSameUser || event === 'USER_UPDATED');
     });
 
     return () => {
