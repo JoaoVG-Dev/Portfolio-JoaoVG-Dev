@@ -513,7 +513,7 @@ export function PublicPortfolio() {
                             aria-controls={languageListId}
                             onClick={() => toggleProjectLanguages(project.id)}
                           >
-                            {isLanguageListOpen ? 'Fechar linguagens ↑' : 'Ver linguagens ↓'}
+                            {isLanguageListOpen ? 'Hide Tech Stack ↑' : 'View Tech Stack ↓'}
                           </button>
                           <div
                             className={`project-tech-panel${isLanguageListOpen ? ' is-open' : ''}`}
